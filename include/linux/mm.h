@@ -1329,8 +1329,6 @@ extern void get_pfn_range_for_nid(unsigned int nid,
 extern unsigned long find_min_pfn_with_active_regions(void);
 extern void free_bootmem_with_active_regions(int nid,
 						unsigned long max_low_pfn);
-u64 __init find_memory_core_early(int nid, u64 size, u64 align,
-					u64 goal, u64 limit);
 extern void sparse_memory_present_with_active_regions(int nid);
 
 extern void __next_mem_pfn_range(int *idx, int nid,
