@@ -1913,7 +1913,7 @@ again:
 	if (unlikely(!memcg || !PageCgroupUsed(pc)))
 		goto out;
 	/* pc->mem_cgroup is unstable ? */
-	if (unlikely(mem_cgroup_stealed(memcg)) || PageTransHuge(page)) {
+	if (unlikely(mem_cgroup_stealed(memcg))) {
 		/* take a lock against to access pc->mem_cgroup */
 		move_lock_mem_cgroup(memcg, &flags);
 		if (memcg != pc->mem_cgroup || !PageCgroupUsed(pc)) {
