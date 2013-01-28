@@ -438,6 +438,7 @@ void kgsl_timestamp_expired(struct work_struct *work)
 	struct kgsl_event *event, *event_tmp;
 	uint32_t ts_processed;
 	unsigned int id;
+	int status;
 
 	mutex_lock(&device->mutex);
 
@@ -451,7 +452,7 @@ void kgsl_timestamp_expired(struct work_struct *work)
 		id = event->context ? event->context->id : KGSL_MEMSTORE_GLOBAL;
 
 		if (event->func)
-			event->func(device, event->priv, id, ts_processed);
+			event->func(device, event->priv, id, event->timestamp);
 
 		if (event->context)
 			kgsl_context_put(event->context);
@@ -462,7 +463,7 @@ void kgsl_timestamp_expired(struct work_struct *work)
 
 	/* Send the next pending event for each context to the device */
 	if (device->ftbl->next_event) {
-		unsigned int id = KGSL_MEMSTORE_GLOBAL;
+		id = KGSL_MEMSTORE_GLOBAL;
 
 		list_for_each_entry(event, &device->events, list) {
 
@@ -470,8 +471,10 @@ void kgsl_timestamp_expired(struct work_struct *work)
 				continue;
 
 			if (event->context->id != id) {
-				device->ftbl->next_event(device, event);
-				id = event->context->id;
+				status = device->ftbl->next_event(device,
+						event);
+				if (!status)
+					id = event->context->id;
 			}
 		}
 	}
