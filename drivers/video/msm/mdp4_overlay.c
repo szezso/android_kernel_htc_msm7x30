@@ -2764,16 +2764,13 @@ static int mdp4_calc_pipe_mdp_clk(struct msm_fb_data_type *mfd,
 	pr_debug("%s: the right %d shifted xscale is %d.\n",
 		 __func__, shift, xscale);
 
-	if (pipe->src_h > pipe->dst_h) {
-		yscale = pipe->src_h;
-		yscale <<= shift;
-		yscale /= pipe->dst_h;
-	} else {		/* upscale */
-		yscale = pipe->dst_h;
-		yscale <<= shift;
-		yscale /= pipe->src_h;
-	}
+	if (pipe->src_h > pipe->dst_h)
+	        yscale = pipe->src_h;
+	else
+                yscale = pipe->dst_h;
 
+        yscale <<= shift;
+        yscale /= pipe->dst_h;
 	yscale *= pipe->src_w;
 	yscale /= hsync;
 
