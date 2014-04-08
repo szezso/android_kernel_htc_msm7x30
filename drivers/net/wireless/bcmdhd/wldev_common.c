@@ -336,7 +336,9 @@ int wldev_set_country(
 	int i;
 	char *broken_ccodes[] = {
 		"AM","AZ","BH","GE","IR","IQ","IL","JO","KW",
-		"LB","OM","QA","SA","SY","TR","TM","AE","YE"};
+		"LB","OM","QA","SA","SY","TR","TM","AE","YE",
+		"GH"
+	};
 
 	if (!country_code) {
 		WLDEV_ERROR(("%s: set country failed for %s\n",
