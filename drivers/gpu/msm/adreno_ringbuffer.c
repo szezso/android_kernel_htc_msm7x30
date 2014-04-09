@@ -1,4 +1,4 @@
-/* Copyright (c) 2002,2007-2012, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2002,2007-2013, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -571,6 +571,9 @@ adreno_ringbuffer_addcmds(struct adreno_ringbuffer *rb,
 	if (adreno_is_a3xx(adreno_dev))
 		total_sizedwords += 7;
 
+	if (adreno_is_a2xx(adreno_dev))
+		total_sizedwords += 2; /* CP_WAIT_FOR_IDLE */
+
 	total_sizedwords += 2; /* scratchpad ts for recovery */
 	if (context && context->flags & CTXT_FLAGS_PER_CONTEXT_TS &&
 			!(flags & KGSL_CMD_FLAGS_INTERNAL_ISSUE)) {
@@ -582,6 +585,8 @@ adreno_ringbuffer_addcmds(struct adreno_ringbuffer *rb,
 		total_sizedwords += 4; /* global timestamp for recovery*/
 	}
 
+	if (adreno_is_a20x(adreno_dev))
+		total_sizedwords += 2; /* CACHE_FLUSH */
 	ringcmds = adreno_ringbuffer_allocspace(rb, context, total_sizedwords);
 	if (!ringcmds) {
 		/*
@@ -630,6 +635,16 @@ adreno_ringbuffer_addcmds(struct adreno_ringbuffer *rb,
 			rb->timestamp[context_id]++;
 	}
 	timestamp = rb->timestamp[context_id];
+
+	/* HW Workaround for MMU Page fault
+	* due to memory getting free early before
+	* GPU completes it.
+	*/
+	if (adreno_is_a2xx(adreno_dev)) {
+		GSL_RB_WRITE(ringcmds, rcmd_gpu,
+			cp_type3_packet(CP_WAIT_FOR_IDLE, 1));
+		GSL_RB_WRITE(ringcmds, rcmd_gpu, 0x00);
+	}
 
 	/* scratchpad ts for recovery */
 	GSL_RB_WRITE(ringcmds, rcmd_gpu, cp_type0_packet(REG_CP_TIMESTAMP, 1));
@@ -683,7 +698,15 @@ adreno_ringbuffer_addcmds(struct adreno_ringbuffer *rb,
 		GSL_RB_WRITE(ringcmds, rcmd_gpu,
 				rb->timestamp[KGSL_MEMSTORE_GLOBAL]);
 	}
-	if (context) {
+
+	if (adreno_is_a20x(adreno_dev)) {
+		GSL_RB_WRITE(ringcmds, rcmd_gpu,
+			cp_type3_packet(CP_EVENT_WRITE, 1));
+		GSL_RB_WRITE(ringcmds, rcmd_gpu, CACHE_FLUSH);
+	}
+	
+        if (context) {
+
 		/* Conditional execution based on memory values */
 		GSL_RB_WRITE(ringcmds, rcmd_gpu,
 			cp_type3_packet(CP_COND_EXEC, 4));
@@ -731,30 +754,6 @@ adreno_ringbuffer_addcmds(struct adreno_ringbuffer *rb,
 	adreno_ringbuffer_submit(rb);
 
 	return timestamp;
-}
-
-void
-adreno_ringbuffer_issuecmds_intr(struct kgsl_device *device,
-						struct kgsl_context *k_ctxt,
-						unsigned int *cmds,
-						int sizedwords)
-{
-	struct adreno_device *adreno_dev = ADRENO_DEVICE(device);
-	struct adreno_ringbuffer *rb = &adreno_dev->ringbuffer;
-	struct adreno_context *a_ctxt = NULL;
-
-	if (!k_ctxt)
-		return;
-
-	a_ctxt = k_ctxt->devctxt;
-
-	if (k_ctxt->id == KGSL_CONTEXT_INVALID ||
-		a_ctxt == NULL ||
-		device->state & KGSL_STATE_HUNG)
-		return;
-
-	adreno_ringbuffer_addcmds(rb, a_ctxt, KGSL_CMD_FLAGS_INTERNAL_ISSUE,
-					cmds, sizedwords, 0);
 }
 
 unsigned int

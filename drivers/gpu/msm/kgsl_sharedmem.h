@@ -125,10 +125,18 @@ kgsl_sharedmem_map_vma(struct vm_area_struct *vma,
 
 static inline void *kgsl_sg_alloc(unsigned int sglen)
 {
+	if ((sglen == 0) || (sglen >= ULONG_MAX / sizeof(struct scatterlist)))
+		return NULL;
+
 	if ((sglen * sizeof(struct scatterlist)) <  PAGE_SIZE)
 		return kzalloc(sglen * sizeof(struct scatterlist), GFP_KERNEL);
-	else
-		return vmalloc(sglen * sizeof(struct scatterlist));
+	else {
+		void *ptr = vmalloc(sglen * sizeof(struct scatterlist));
+		if (ptr)
+			memset(ptr, 0, sglen * sizeof(struct scatterlist));
+
+		return ptr;
+	}
 }
 
 static inline void kgsl_sg_free(void *ptr, unsigned int sglen)
