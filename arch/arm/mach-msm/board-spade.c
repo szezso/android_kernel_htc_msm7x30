@@ -3298,7 +3298,6 @@ struct ion_platform_heap msm7x30_heaps[] = {
 			.type	= ION_HEAP_TYPE_CARVEOUT,
 			.name	= ION_CAMERA_HEAP_NAME,
 			.memory_type = ION_EBI_TYPE,
-			.has_outer_cache = 1,
 			.extra_data = (void *)&co_ion_pdata,
 		},
 		/* PMEM_MDP =SF */
@@ -3307,7 +3306,6 @@ struct ion_platform_heap msm7x30_heaps[] = {
 			.type	= ION_HEAP_TYPE_CARVEOUT,
 			.name	= ION_SF_HEAP_NAME,
 			.memory_type = ION_EBI_TYPE,
-			.has_outer_cache = 1,
 			.extra_data = (void *)&co_ion_pdata,
 		},
 #endif
