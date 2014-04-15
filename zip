@@ -15,7 +15,7 @@ else
 fi
 
 # cleanup
-rm -v $ANYKERNEL/{kernel/zImage}
+rm -v $ANYKERNEL/kernel/zImage
 # copy files
 cp -v arch/arm/boot/zImage $ANYKERNEL/kernel/zImage
 # zip it
