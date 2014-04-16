@@ -91,35 +91,14 @@ static struct clock_state drv_state = { 0 };
 static struct clkctl_acpu_speed *backup_s;
 
 static struct pll pll2_tbl[] = {
-#ifdef CONFIG_ACPU_AGGRESSIVE_BUS
-        {  53, 1, 3, 0 }, /* 1024 MHz */
-        { 125, 0, 1, 1 }, /* 1200 MHz */
-        {  79, 0, 1, 0 }, /* 1500 MHz */
-        {  81, 0, 1, 0 }, /* 1527 MHz */
-        {  83, 0, 1, 0 }, /* 1553 MHz */
-        {  85, 0, 1, 0 }, /* 1586 MHz */
-        {  87, 0, 1, 0 }, /* 1621 MHz */
-        {  89, 0, 1, 0 }, /* 1675 MHz */
-        {  91, 0, 1, 0 }, /* 1713 MHz */
-        {  93, 0, 1, 0 }, /* 1757 MHz */
-        {  95, 0, 1, 0 }, /* 1784 MHz */
-        {  97, 0, 1, 0 }, /* 1784 MHz */
-        {  99, 0, 1, 0 }, /* 1784 MHz */
-#else
-        {  42, 0, 1, 0 }, /*  806 MHz */
-        {  53, 1, 3, 0 }, /* 1024 MHz */
-        { 125, 0, 1, 1 }, /* 1200 MHz */
-        {  73, 0, 1, 0 }, /* 1401 MHz */
-        {  79, 0, 1, 0 }, /* 1500 MHz */
-        {  81, 0, 1, 0 }, /* 1527 MHz */
-        {  83, 0, 1, 0 }, /* 1553 MHz */
-        {  85, 0, 1, 0 }, /* 1586 MHz */
-        {  87, 0, 1, 0 }, /* 1621 MHz */
-        {  89, 0, 1, 0 }, /* 1675 MHz */
-        {  91, 0, 1, 0 }, /* 1713 MHz */
-        {  93, 0, 1, 0 }, /* 1757 MHz */
-        {  95, 0, 1, 0 }, /* 1784 MHz */
-#endif /* CONFIG_ACPU_AGGRESSIVE_BUS */
+	{  42, 0, 1, 0 }, /*  806 MHz */
+	{  53, 1, 3, 0 }, /* 1024 MHz */
+	{ 125, 0, 1, 1 }, /* 1200 MHz */
+	{  73, 0, 1, 0 }, /* 1401 MHz */
+	{  79, 0, 1, 0 }, /* 1500 MHz */
+	{  84, 0, 1, 0 }, /* 1.6 */
+	{  89, 0, 1, 0 }, /* 1.7 */
+	{  94, 0, 1, 0 }, /* 1.8 */
 };
 
 /* Use negative numbers for sources that can't be enabled/disabled */
@@ -143,41 +122,36 @@ static struct clk *acpuclk_sources[MAX_SOURCE];
  * know all the h/w requirements.
  */
 static struct clkctl_acpu_speed acpu_freq_tbl[] = {
-	{ 0, 24576,  LPXO,     0, 0,  30720000,  850, VDD_RAW(850) },
-	{ 0, 61440,  PLL_3,    5, 11, 61440000,  850, VDD_RAW(850) },
-	{ 0, 122880, PLL_3,    5, 5,  61440000,  850, VDD_RAW(850) },
-	{ 0, 184320, PLL_3,    5, 4,  61440000,  850, VDD_RAW(850) },
-	{ 0, MAX_AXI_KHZ, AXI, 1, 0,  61440000,  825, VDD_RAW(825) },
-	{ 1, 149760, PLL_3,    5, 2,  61440000,  800, VDD_RAW(800) },
-	{ 1, 245760, PLL_3,    5, 1,  122800000, 850, VDD_RAW(850) },
-	{ 1, 341640, PLL_3,    5, 1,  122800000, 900, VDD_RAW(900) },
-	{ 1, 614400, PLL_1,    2, 0,  153600000, 1000, VDD_RAW(1000) },
-	{ 1, 768000,  PLL_2, 3, 0, 192000000, 1050, VDD_RAW(1050), &pll2_tbl[0]},
-	{ 1, 806400,  PLL_2, 3, 0, 192000000, 1100, VDD_RAW(1100), &pll2_tbl[1]},
-	{ 1, 1024000, PLL_2, 3, 0, 192000000, 1200, VDD_RAW(1200), &pll2_tbl[2]},
-	{ 1, 1200000, PLL_2, 3, 0, 192000000, 1200, VDD_RAW(1200), &pll2_tbl[3]},
-	{ 1, 1305600, PLL_2, 3, 0, 192000000, 1225, VDD_RAW(1225), &pll2_tbl[4]},
-	{ 1, 1401600, PLL_2, 3, 0, 192000000, 1250, VDD_RAW(1250), &pll2_tbl[5]},
-	{ 1, 1516800, PLL_2, 3, 0, 192000000, 1300, VDD_RAW(1300), &pll2_tbl[6]},
-#ifdef CONFIG_ACPU_HIGH_OC
-#ifdef CONFIG_ACPU_HIGH_BUS_OC
-	{ 1, 1612800, PLL_2, 3, 0, 192000000, 1325, VDD_RAW(1325), &pll2_tbl[7]},
-	{ 1, 1689600, PLL_2, 3, 0, 192000000, 1375, VDD_RAW(1375), &pll2_tbl[8]},
-	{ 1, 1766400, PLL_2, 3, 0, 192000000, 1425, VDD_RAW(1425), &pll2_tbl[9]},
-	{ 1, 1843200, PLL_2, 3, 0, 192000000, 1450, VDD_RAW(1450), &pll2_tbl[10]},
-	{ 1, 1920000, PLL_2, 3, 0, 192000000, 1500, VDD_RAW(1500), &pll2_tbl[11]},
-	{ 1, 1996800, PLL_2, 3, 0, 192000000, 1500, VDD_RAW(1500), &pll2_tbl[12]},
-	{ 1, 2016000, PLL_2, 3, 0, 192000000, 1525, VDD_RAW(1525), &pll2_tbl[13]},
+	{ 0, 24576,  LPXO,     0, 0,  30720000,  900, VDD_RAW(900) },
+	{ 0, 61440,  PLL_3,    5, 11, 61440000,  900, VDD_RAW(900) },
+	{ 0, 122880, PLL_3,    5, 5,  61440000,  900, VDD_RAW(900) },
+	{ 0, 184320, PLL_3,    5, 4,  61440000,  900, VDD_RAW(900) },
+	{ 0, MAX_AXI_KHZ, AXI, 1, 0,  61440000,  900, VDD_RAW(900) },
+	{ 1, 245760, PLL_3,    5, 2,  61440000,  900, VDD_RAW(900) },
+	{ 1, 368640, PLL_3,    5, 1,  122800000, 900, VDD_RAW(900) },
+	/* AXI has MSMC1 implications. See above. */
+
+#ifdef CONFIG_MACH_SAGA
+        { 1, 768000,  PLL_1, 2, 0, 153600000, 950, VDD_RAW(950) },
+	{ 1, 806400,  PLL_2, 3, 0, 192000000, 1025, VDD_RAW(1025), &pll2_tbl[0]},
+	{ 1, 1024000, PLL_2, 3, 0, 192000000, 1050, VDD_RAW(1050), &pll2_tbl[1]},
+	{ 1, 1200000, PLL_2, 3, 0, 192000000, 1100, VDD_RAW(1100), &pll2_tbl[2]},
+	{ 1, 1401600, PLL_2, 3, 0, 192000000, 1200, VDD_RAW(1200), &pll2_tbl[3]},
+	{ 1, 1516800, PLL_2, 3, 0, 192000000, 1250, VDD_RAW(1250), &pll2_tbl[4]},
+        { 1, 1612800, PLL_2, 3, 0, 192000000, 1350, VDD_RAW(1350), &pll2_tbl[5]},
+        { 1, 1708800, PLL_2, 3, 0, 192000000, 1350, VDD_RAW(1350), &pll2_tbl[6]},
+        { 1, 1804800, PLL_2, 3, 0, 192000000, 1400, VDD_RAW(1400), &pll2_tbl[7]},
 #else
-        { 1, 1612800, PLL_2, 3, 0, 192000000, 1325, VDD_RAW(1325), &pll2_tbl[7]},
-        { 1, 1689600, PLL_2, 3, 0, 192000000, 1375, VDD_RAW(1375), &pll2_tbl[7]},
-        { 1, 1766400, PLL_2, 3, 0, 192000000, 1425, VDD_RAW(1425), &pll2_tbl[8]},
-        { 1, 1843200, PLL_2, 3, 0, 192000000, 1450, VDD_RAW(1450), &pll2_tbl[8]},
-        { 1, 1920000, PLL_2, 3, 0, 192000000, 1500, VDD_RAW(1500), &pll2_tbl[8]},
-        { 1, 1996800, PLL_2, 3, 0, 192000000, 1500, VDD_RAW(1500), &pll2_tbl[8]},
-        { 1, 2016000, PLL_2, 3, 0, 192000000, 1525, VDD_RAW(1525), &pll2_tbl[8]},
-#endif /* CONFIG_ACPU_HIGH_BUS_OC */
-#endif /* CONFIG_ACPU_HIGH_OC */
+        { 1, 768000,  PLL_1, 2, 0, 153600000, 1050, VDD_RAW(1050) },
+        { 1, 806400,  PLL_2, 3, 0, 192000000, 1100, VDD_RAW(1100), &pll2_tbl[0]},
+        { 1, 1024000, PLL_2, 3, 0, 192000000, 1200, VDD_RAW(1200), &pll2_tbl[1]},
+        { 1, 1200000, PLL_2, 3, 0, 192000000, 1200, VDD_RAW(1200), &pll2_tbl[2]},
+        { 1, 1401600, PLL_2, 3, 0, 192000000, 1250, VDD_RAW(1250), &pll2_tbl[3]},
+        { 1, 1516800, PLL_2, 3, 0, 192000000, 1300, VDD_RAW(1300), &pll2_tbl[4]},
+        { 1, 1612800, PLL_2, 3, 0, 192000000, 1400, VDD_RAW(1400), &pll2_tbl[4]},
+        { 1, 1708800, PLL_2, 3, 0, 192000000, 1400, VDD_RAW(1400), &pll2_tbl[4]},
+        { 1, 1804800, PLL_2, 3, 0, 192000000, 1450, VDD_RAW(1450), &pll2_tbl[4]},
+#endif
 	{ 0 }
 };
 
@@ -281,7 +255,7 @@ static int acpuclk_7x30_set_rate(int cpu, unsigned long rate,
 		goto out;
 	}
 
-	if (reason == SETRATE_CPUFREQ || reason == SETRATE_INIT) {
+	if (reason == SETRATE_CPUFREQ) {
 		/* Increase VDD if needed. */
 		if (tgt_s->vdd_mv > strt_s->vdd_mv) {
 			rc = acpuclk_set_acpu_vdd(tgt_s);
@@ -562,10 +536,6 @@ static int __init acpuclk_7x30_init(struct acpuclk_soc_data *soc_data)
 	lpj_init();
 	setup_cpufreq_table();
 	acpuclk_register(&acpuclk_7x30_data);
-
-#ifdef CONFIG_BOOT_CLOCK_OC
-	acpuclk_set_rate(cpu, 1516800, SETRATE_INIT);
-#endif
 
 	return 0;
 }
