@@ -27,7 +27,6 @@ enum setrate_reason {
 	SETRATE_SWFI,
 	SETRATE_PC,
 	SETRATE_HOTPLUG,
-	SETRATE_INIT,
 };
 
 /**
