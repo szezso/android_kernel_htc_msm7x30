@@ -329,8 +329,10 @@ MAKEFLAGS += --include-dir=$(srctree)
 $(srctree)/scripts/Kbuild.include: ;
 include $(srctree)/scripts/Kbuild.include
 
+ifeq ($(USE_CCACHE),1)
 # ccache
 CCACHE	= $(shell which ccache)
+endif
 
 # Make variables (CC, etc...)
 
