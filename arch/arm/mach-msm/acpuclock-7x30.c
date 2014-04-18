@@ -119,16 +119,16 @@ static struct clk *acpuclk_sources[MAX_SOURCE];
  * know all the h/w requirements.
  */
 static struct clkctl_acpu_speed acpu_freq_tbl[] = {
-	{ 0, 24576,  LPXO,     0, 0,  30720000, 1000, VDD_RAW(1000) },
-	{ 0, 61440,  PLL_3,    5, 11, 61440000, 1000, VDD_RAW(1000) },
-	{ 0, 122880, PLL_3,    5, 5,  61440000, 1000, VDD_RAW(1000) },
-	{ 0, 184320, PLL_3,    5, 4,  61440000, 1000, VDD_RAW(1000) },
-	{ 0, MAX_AXI_KHZ, AXI, 1, 0,  61440000, 1000, VDD_RAW(1000) },
+	{ 0, 24576,  LPXO,     0, 0,  30720000,  900, VDD_RAW(900) },
+	{ 0, 61440,  PLL_3,    5, 11, 61440000,  900, VDD_RAW(900) },
+	{ 0, 122880, PLL_3,    5, 5,  61440000,  900, VDD_RAW(900) },
+	{ 0, 184320, PLL_3,    5, 4,  61440000,  900, VDD_RAW(900) },
+	{ 0, MAX_AXI_KHZ, AXI, 1, 0,  61440000,  900, VDD_RAW(900) },
 	/* 122MHz values adapted from klquicksall's kernel */
-	{ 1, 122000, PLL_3,    5, 2,  61440000,  925, VDD_RAW(925) },
-	{ 1, 245760, PLL_3,    5, 2,  61440000, 1000, VDD_RAW(1000) },
-	{ 1, 368640, PLL_3,    5, 1,  122800000,1050, VDD_RAW(1050) },
-	{ 1, 768000, PLL_1,    2, 0,  153600000,1100, VDD_RAW(1100) },
+	{ 1, 122000, PLL_3,    5, 2,  61440000,  875, VDD_RAW(875) },
+	{ 1, 245760, PLL_3,    5, 2,  61440000,  900, VDD_RAW(900) },
+	{ 1, 368640, PLL_3,    5, 1,  122800000, 950, VDD_RAW(950) },
+	{ 1, 768000, PLL_1,    2, 0,  153600000,1025, VDD_RAW(1025) },
 	/* ACPU >= 806.4MHz requires MSMC1 @ 1.2V. Voting for
 	 * AXI @ 192MHz accomplishes this implicitly. */
 	{ 1, 806400,  PLL_2, 3, 0, 192000000, 1100, VDD_RAW(1100), &pll2_tbl[0]},
