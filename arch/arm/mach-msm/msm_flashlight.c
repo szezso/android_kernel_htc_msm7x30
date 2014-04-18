@@ -457,7 +457,7 @@ static void fl_lcdev_brightness_set(struct led_classdev *led_cdev,
 #endif
 		else
 			mode = FL_MODE_TORCH;
-	} else if (brightness > LED_HALF && brightness <= LED_FULL_COMPAT) {
+	} else if (brightness > LED_HALF && brightness <= LED_FULL) {
 		/* Flashlight mode */
 		if (brightness == (LED_HALF + 1))
 			mode = FL_MODE_PRE_FLASH; /* pre-flash mode */
