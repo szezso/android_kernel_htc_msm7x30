@@ -329,8 +329,10 @@ MAKEFLAGS += --include-dir=$(srctree)
 $(srctree)/scripts/Kbuild.include: ;
 include $(srctree)/scripts/Kbuild.include
 
+ifeq ($(USE_CCACHE),1)
 # ccache
 CCACHE	= $(shell which ccache)
+endif
 
 # Make variables (CC, etc...)
 
@@ -357,10 +359,10 @@ CC		= $(srctree)/scripts/gcc-wrapper.py $(REAL_CC)
 
 CHECKFLAGS     := -D__linux__ -Dlinux -D__STDC__ -Dunix -D__unix__ \
 		   -Wbitwise -Wno-return-void $(CF)
-CFLAGS_MODULE   =
+CFLAGS_MODULE   = -munaligned-access -mcpu=cortex-a8 -mtune=cortex-a8 -mfpu=neon
 AFLAGS_MODULE   =
 LDFLAGS_MODULE  =
-CFLAGS_KERNEL   =
+CFLAGS_KERNEL   = -munaligned-access -mcpu=cortex-a8 -mtune=cortex-a8 -mfpu=neon
 AFLAGS_KERNEL   =
 CFLAGS_GCOV     = -fprofile-arcs -ftest-coverage
 
@@ -372,19 +374,13 @@ LINUXINCLUDE    := -I$(srctree)/arch/$(hdr-arch)/include \
                    $(if $(KBUILD_SRC), -I$(srctree)/include) \
                    -include include/generated/autoconf.h
 
-KBUILD_CPPFLAGS := -D__KERNEL__
+KBUILD_CPPFLAGS	:= -D__KERNEL__
 
-KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
-		   -fno-strict-aliasing -fno-common \
-		   -Werror-implicit-function-declaration \
-		   -Wno-format-security \
-		   -fno-delete-null-pointer-checks -mno-unaligned-access \
-		   -mcpu=cortex-a8 -mtune=cortex-a8 -march=armv7-a -mfpu=neon \
-		   -funsafe-math-optimizations \
-		   -fsingle-precision-constant -fpredictive-commoning -fipa-cp-clone \
-		   -fgcse-after-reload -ftree-vectorize -pipe \
-		   -funswitch-loops
-
+KBUILD_CFLAGS	:= -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
+				   -fno-strict-aliasing -fno-common \
+				   -Werror-implicit-function-declaration \
+				   -Wno-format-security \
+				   -fno-delete-null-pointer-checks
 KBUILD_AFLAGS_KERNEL :=
 KBUILD_CFLAGS_KERNEL :=
 KBUILD_AFLAGS   := -D__ASSEMBLY__

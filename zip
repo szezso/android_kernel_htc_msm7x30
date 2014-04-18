@@ -15,9 +15,8 @@ else
 fi
 
 # cleanup
-rm -v $ANYKERNEL/{kernel/zImage,system/lib/modules/*}
+rm -v $ANYKERNEL/kernel/zImage
 # copy files
-find . -name "*.ko" -exec cp -v {} $ANYKERNEL/system/lib/modules/ \;
 cp -v arch/arm/boot/zImage $ANYKERNEL/kernel/zImage
 # zip it
 cd $ANYKERNEL

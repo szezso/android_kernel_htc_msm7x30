@@ -54,7 +54,7 @@
 /* mv = (750mV + (raw * 25mV)) * (2 - VREF_SEL) */
 #define VDD_RAW(mv) (((MV(mv) / V_STEP) - 30) | VREG_DATA)
 
-#define MAX_AXI_KHZ 192000
+#define MAX_AXI_KHZ 201600
 
 #define ACPU_MIN_UV_MV 700U
 #define ACPU_MAX_UV_MV 1600U
@@ -95,10 +95,7 @@ static struct pll pll2_tbl[] = {
 	{  53, 1, 3, 0 }, /* 1024 MHz */
 	{ 125, 0, 1, 1 }, /* 1200 MHz */
 	{  73, 0, 1, 0 }, /* 1401 MHz */
-	{  79, 0, 1, 0 }, /* 1500 MHz */
-	{  84, 0, 1, 0 }, /* 1.6 */
-	{  89, 0, 1, 0 }, /* 1.7 */
-	{  94, 0, 1, 0 }, /* 1.8 */
+	{  78, 0, 1, 0 }, /* 1500 MHz */
 };
 
 /* Use negative numbers for sources that can't be enabled/disabled */
@@ -127,31 +124,28 @@ static struct clkctl_acpu_speed acpu_freq_tbl[] = {
 	{ 0, 122880, PLL_3,    5, 5,  61440000,  900, VDD_RAW(900) },
 	{ 0, 184320, PLL_3,    5, 4,  61440000,  900, VDD_RAW(900) },
 	{ 0, MAX_AXI_KHZ, AXI, 1, 0,  61440000,  900, VDD_RAW(900) },
+	/* 122MHz values adapted from klquicksall's kernel */
+	{ 1, 122000, PLL_3,    5, 2,  61440000,  875, VDD_RAW(875) },
 	{ 1, 245760, PLL_3,    5, 2,  61440000,  900, VDD_RAW(900) },
-	{ 1, 368640, PLL_3,    5, 1,  122800000, 900, VDD_RAW(900) },
-	/* AXI has MSMC1 implications. See above. */
-
-#ifdef CONFIG_MACH_SAGA
-        { 1, 768000,  PLL_1, 2, 0, 153600000, 950, VDD_RAW(950) },
-	{ 1, 806400,  PLL_2, 3, 0, 192000000, 1025, VDD_RAW(1025), &pll2_tbl[0]},
-	{ 1, 1024000, PLL_2, 3, 0, 192000000, 1050, VDD_RAW(1050), &pll2_tbl[1]},
-	{ 1, 1200000, PLL_2, 3, 0, 192000000, 1100, VDD_RAW(1100), &pll2_tbl[2]},
-	{ 1, 1401600, PLL_2, 3, 0, 192000000, 1200, VDD_RAW(1200), &pll2_tbl[3]},
-	{ 1, 1516800, PLL_2, 3, 0, 192000000, 1250, VDD_RAW(1250), &pll2_tbl[4]},
-        { 1, 1612800, PLL_2, 3, 0, 192000000, 1350, VDD_RAW(1350), &pll2_tbl[5]},
-        { 1, 1708800, PLL_2, 3, 0, 192000000, 1350, VDD_RAW(1350), &pll2_tbl[6]},
-        { 1, 1804800, PLL_2, 3, 0, 192000000, 1400, VDD_RAW(1400), &pll2_tbl[7]},
-#else
-        { 1, 768000,  PLL_1, 2, 0, 153600000, 1050, VDD_RAW(1050) },
-        { 1, 806400,  PLL_2, 3, 0, 192000000, 1100, VDD_RAW(1100), &pll2_tbl[0]},
-        { 1, 1024000, PLL_2, 3, 0, 192000000, 1200, VDD_RAW(1200), &pll2_tbl[1]},
-        { 1, 1200000, PLL_2, 3, 0, 192000000, 1200, VDD_RAW(1200), &pll2_tbl[2]},
-        { 1, 1401600, PLL_2, 3, 0, 192000000, 1250, VDD_RAW(1250), &pll2_tbl[3]},
-        { 1, 1516800, PLL_2, 3, 0, 192000000, 1300, VDD_RAW(1300), &pll2_tbl[4]},
-        { 1, 1612800, PLL_2, 3, 0, 192000000, 1400, VDD_RAW(1400), &pll2_tbl[4]},
-        { 1, 1708800, PLL_2, 3, 0, 192000000, 1400, VDD_RAW(1400), &pll2_tbl[4]},
-        { 1, 1804800, PLL_2, 3, 0, 192000000, 1450, VDD_RAW(1450), &pll2_tbl[4]},
-#endif
+	{ 1, 368640, PLL_3,    5, 1,  122800000, 950, VDD_RAW(950) },
+	{ 1, 768000, PLL_1,    2, 0,  153600000,1025, VDD_RAW(1025) },
+	/* ACPU >= 806.4MHz requires MSMC1 @ 1.2V. Voting for
+	 * AXI @ 192MHz accomplishes this implicitly. */
+	{ 1, 806400,  PLL_2, 3, 0, 192000000, 1100, VDD_RAW(1100), &pll2_tbl[0]},
+	{ 1, 1024000, PLL_2, 3, 0, 192000000, 1200, VDD_RAW(1200), &pll2_tbl[1]},
+	{ 1, 1200000, PLL_2, 3, 0, 192000000, 1200, VDD_RAW(1200), &pll2_tbl[2]},
+	{ 1, 1401600, PLL_2, 3, 0, 192000000, 1250, VDD_RAW(1250), &pll2_tbl[3]},
+	{ 1, 1497600, PLL_2, 3, 0, 192000000, 1250, VDD_RAW(1250), &pll2_tbl[4]},
+	/* The following clocks are adapted from synergye's
+	 * and LorDClockaN's acpu_freq_tbl */
+	{ 1, 1536000, PLL_2, 3, 0, 192000000, 1300, VDD_RAW(1300), &pll2_tbl[4]},
+	{ 1, 1612800, PLL_2, 3, 0, 192000000, 1325, VDD_RAW(1325), &pll2_tbl[4]},
+	{ 1, 1689600, PLL_2, 3, 0, 192000000, 1375, VDD_RAW(1375), &pll2_tbl[4]},
+	{ 1, 1766400, PLL_2, 3, 0, 192000000, 1425, VDD_RAW(1425), &pll2_tbl[4]},
+	{ 1, 1843200, PLL_2, 3, 0, 192000000, 1450, VDD_RAW(1450), &pll2_tbl[4]},
+	{ 1, 1920000, PLL_2, 3, 0, 199680000, 1475, VDD_RAW(1475), &pll2_tbl[4]},
+	{ 1, 1996800, PLL_2, 3, 0, 199680000, 1500, VDD_RAW(1500), &pll2_tbl[4]},
+	{ 1, 2016000, PLL_2, 3, 0, 201600000, 1525, VDD_RAW(1525), &pll2_tbl[4]},
 	{ 0 }
 };
 
