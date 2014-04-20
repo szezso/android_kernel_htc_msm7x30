@@ -176,7 +176,7 @@ int aat1277_flashlight_control(int mode)
 	case FL_MODE_FLASH:
 		gpio_direction_output(this_fl_str->gpio_flash, 1);
 		this_fl_str->mode_status = FL_MODE_FLASH;
-		this_fl_str->fl_lcdev.brightness = LED_FULL_COMPAT;
+		this_fl_str->fl_lcdev.brightness = LED_FULL;
 
 		hrtimer_start(&this_fl_str->timer,
 			ktime_set(this_fl_str->flash_sw_timeout_ms / 1000,
@@ -291,7 +291,7 @@ int aat3177_flashlight_control(int mode)
 	case FL_MODE_FLASH:
 		flashlight_aat3177_hw_command(1);
 		this_fl_str->mode_status = FL_MODE_FLASH;
-		this_fl_str->fl_lcdev.brightness = LED_FULL_COMPAT;
+		this_fl_str->fl_lcdev.brightness = LED_FULL;
 		hrtimer_start(&this_fl_str->timer,
 			ktime_set(this_fl_str->flash_sw_timeout_ms / 1000,
 				(this_fl_str->flash_sw_timeout_ms % 1000) *
@@ -375,7 +375,7 @@ int aat1271_flashlight_control(int mode)
 		flashlight_hw_command(2, 4);
 		gpio_direction_output(this_fl_str->gpio_flash, 1);
 		this_fl_str->mode_status = FL_MODE_FLASH;
-		this_fl_str->fl_lcdev.brightness = LED_FULL_COMPAT;
+		this_fl_str->fl_lcdev.brightness = LED_FULL;
 		hrtimer_start(&this_fl_str->timer,
 			ktime_set(this_fl_str->flash_sw_timeout_ms / 1000,
 				(this_fl_str->flash_sw_timeout_ms % 1000) *
@@ -457,7 +457,7 @@ static void fl_lcdev_brightness_set(struct led_classdev *led_cdev,
 #endif
 		else
 			mode = FL_MODE_TORCH;
-	} else if (brightness > LED_HALF && brightness <= LED_FULL_COMPAT) {
+	} else if (brightness > LED_HALF && brightness <= LED_FULL) {
 		/* Flashlight mode */
 		if (brightness == (LED_HALF + 1))
 			mode = FL_MODE_PRE_FLASH; /* pre-flash mode */
