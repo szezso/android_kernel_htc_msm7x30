@@ -578,8 +578,6 @@ adreno_ringbuffer_addcmds(struct adreno_ringbuffer *rb,
 		total_sizedwords += 4; /* global timestamp for fault tolerance*/
 	}
 
-	if (adreno_is_a20x(adreno_dev))
-		total_sizedwords += 2; /* CACHE_FLUSH */
 	ringcmds = adreno_ringbuffer_allocspace(rb, context, total_sizedwords);
 	if (!ringcmds)
 		return -ENOSPC;
@@ -682,15 +680,7 @@ adreno_ringbuffer_addcmds(struct adreno_ringbuffer *rb,
 						eoptimestamp)));
 		GSL_RB_WRITE(ringcmds, rcmd_gpu, rb->global_ts);
 	}
-
-	if (adreno_is_a20x(adreno_dev)) {
-		GSL_RB_WRITE(ringcmds, rcmd_gpu,
-			cp_type3_packet(CP_EVENT_WRITE, 1));
-		GSL_RB_WRITE(ringcmds, rcmd_gpu, CACHE_FLUSH);
-	}
-	
-        if (context) {
-
+	if (context) {
 		/* Conditional execution based on memory values */
 		GSL_RB_WRITE(ringcmds, rcmd_gpu,
 			cp_type3_packet(CP_COND_EXEC, 4));
