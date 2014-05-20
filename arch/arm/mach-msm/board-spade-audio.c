@@ -59,9 +59,9 @@ static struct q5v2_hw_info_percentage q5v2_audio_hw[Q5V2_HW_COUNT] = {
 	[Q5V2_HW_HANDSET] = {
 		.max_step = 6,
 		.gain[VOC_NB_INDEX] =
-		{-2000, -1500, -1000, -700, -100, 480, 0, 0, 0, 0},
+		{-1600, -1100, -600, 250, 750, 1250, 0, 0, 0, 0},
 		.gain[VOC_WB_INDEX] =
-		{-1000, -600, -200, 240, 720, 1200, 0, 0, 0, 0},
+		{-1600, -1100, -600, 250, 750, 1250, 0, 0, 0, 0},
 	},
 	[Q5V2_HW_HEADSET] = {
 		.max_step = 6,
