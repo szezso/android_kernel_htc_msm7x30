@@ -2048,7 +2048,7 @@ static void bl_workqueue_handler(struct work_struct *work)
 	down(&mfd->sem);
 	if ((pdata) && (pdata->set_backlight) && (!bl_updated)
 					&& (mfd->panel_power_on)) {
-		msm_fb_scale_bl(&temp);
+		msm_fb_scale_bl(mfd->panel_info.bl_max, &temp);
 		mfd->bl_level = temp;
 		pdata->set_backlight(mfd);
 		bl_level_old = unset_bl_level;
