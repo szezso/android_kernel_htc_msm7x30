@@ -642,6 +642,7 @@ void mdp4_overlay_lcdc_vsync_push(struct msm_fb_data_type *mfd,
 				struct mdp4_overlay_pipe *pipe);
 void mdp4_mddi_overlay_dmas_restore(void);
 void mdp4_overlay_solidfill_init(struct mdp4_overlay_pipe *pipe);
+void mdp4_lcdc_free_base_pipe(struct msm_fb_data_type *mfd);
 
 #ifndef CONFIG_FB_MSM_MIPI_DSI
 void mdp4_mddi_dma_busy_wait(struct msm_fb_data_type *mfd);
@@ -707,7 +708,6 @@ void mdp4_dsi_video_overlay_blt(struct msm_fb_data_type *mfd,
 void mdp4_dsi_video_base_swap(int cndx, struct mdp4_overlay_pipe *pipe);
 void mdp4_dsi_video_free_base_pipe(struct msm_fb_data_type *mfd);
 void mdp4_dsi_cmd_free_base_pipe(struct msm_fb_data_type *mfd);
-void mdp4_lcdc_free_base_pipe(struct msm_fb_data_type *mfd);
 void mdp4_dtv_free_base_pipe(struct msm_fb_data_type *mfd);
 
 #ifdef CONFIG_FB_MSM_MDP40

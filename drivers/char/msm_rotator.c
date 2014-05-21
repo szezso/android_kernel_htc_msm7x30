@@ -2116,7 +2116,7 @@ static int msm_rotator_do_rotate_sub(
 		break;
 	case MDP_YCBYCR_H2V1:
 	case MDP_YCRYCB_H2V1:
-		rc = msm_rotator_ycxycx(img_info,,
+		rc = msm_rotator_ycxycx(img_info,
 				in_paddr, out_paddr, use_imem,
 				msm_rotator_dev->last_session_idx != s,
 				out_chroma_paddr);
