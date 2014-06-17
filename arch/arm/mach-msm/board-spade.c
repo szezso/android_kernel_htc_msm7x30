@@ -3362,6 +3362,7 @@ static void __init size_pmem_devices(void)
 }
 
 #ifdef CONFIG_ANDROID_PMEM
+#if 0
 static void __init reserve_memory_for(struct android_pmem_platform_data *p)
 {
 	if (p->size > 0) {
@@ -3369,6 +3370,7 @@ static void __init reserve_memory_for(struct android_pmem_platform_data *p)
 		msm7x30_reserve_table[p->memory_type].size += p->size;
 	}
 }
+#endif
 #endif
 
 static void __init reserve_pmem_memory(void)
@@ -3462,7 +3464,7 @@ static void __init spade_init_early(void)
 static void __init spade_fixup(struct machine_desc *desc, struct tag *tags,
 								char **cmdline, struct meminfo *mi)
 {
-	int mem = parse_tag_memsize((const struct tag *)tags);
+	//int mem = parse_tag_memsize((const struct tag *)tags);
 	engineerid = parse_tag_engineerid(tags);
 
 	mi->nr_banks = 2;
