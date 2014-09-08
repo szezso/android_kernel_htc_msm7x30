@@ -56,6 +56,8 @@ static void synaptics_ts_early_suspend(struct early_suspend *h);
 static void synaptics_ts_late_resume(struct early_suspend *h);
 #endif
 
+static DEFINE_MUTEX(syn_mutex);
+
 static struct synaptics_ts_data *gl_ts;
 static const char SYNAPTICSNAME[]	= "Synaptics_3K";
 static uint32_t syn_panel_version;
@@ -134,11 +136,13 @@ static int i2c_syn_read(struct i2c_client *client, uint16_t addr, uint8_t *data,
 	};
 	buf = addr & 0xFF;
 
+	mutex_lock(&syn_mutex);
 	for (retry = 0; retry < SYN_I2C_RETRY_TIMES; retry++) {
 		if (i2c_transfer(client->adapter, msg, 2) == 2)
 			break;
 		msleep(10);
 	}
+	mutex_unlock(&syn_mutex);
 
 	if (retry == SYN_I2C_RETRY_TIMES) {
 		printk(KERN_ERR "[TP]: i2c_read retry over %d\n",
@@ -171,7 +175,9 @@ static ssize_t register_show(struct device *dev,
 	struct synaptics_ts_data *ts;
 	ts = gl_ts;
 
+	mutex_lock(&syn_mutex);
 	data = i2c_smbus_read_byte_data(ts->client, syn_reg_addr);
+	mutex_unlock(&syn_mutex);
 	if (data < 0) {
 		printk(KERN_WARNING "[TP] %s: read fail\n", __func__);
 		return ret;
@@ -201,8 +207,10 @@ static ssize_t register_store(struct device *dev,
 			write_da = simple_strtol(buf_tmp, NULL, 10);
 			printk(KERN_DEBUG "[TP] write addr: 0x%X, data: 0x%X\n",
 						syn_reg_addr, write_da);
+			mutex_lock(&syn_mutex);
 			ret = i2c_smbus_write_byte_data(ts->client,
 					syn_reg_addr, write_da);
+			mutex_unlock(&syn_mutex);
 			if (ret < 0) {
 				printk(KERN_ERR "[TP] %s: write fail(%d)\n",
 								__func__, ret);
@@ -519,6 +527,7 @@ static int synaptics_init_panel(struct synaptics_ts_data *ts)
 {
 	int ret = 0;
 
+	mutex_lock(&syn_mutex);
 	if (ts->sensitivity_adjust) {
 		ret = i2c_smbus_write_byte_data(ts->client,
 			ts->page_table[2].value + 0x48, ts->sensitivity_adjust); /* Set Sensitivity */
@@ -537,6 +546,8 @@ static int synaptics_init_panel(struct synaptics_ts_data *ts)
 	/* Configured */
 	i2c_smbus_write_byte_data(ts->client, ts->page_table[8].value, 0x80);
 
+	mutex_unlock(&syn_mutex);
+
 	return ret;
 }
 
@@ -554,8 +565,11 @@ static void synaptics_ts_work_func(struct work_struct *work)
 	uint8_t buf[(ts->finger_support * 21 + 11) / 4];
 
 	start_reg = ts->page_table[9].value;
+	mutex_lock(&syn_mutex);
 	ret = i2c_syn_read(ts->client, start_reg, buf, sizeof(buf));
+	mutex_unlock(&syn_mutex);
 	if (ret < 0 || ((buf[0] & 0x0F))) {
+		mutex_lock(&syn_mutex);
 		if (ret < 0)
 			printk(KERN_ERR "[TP] synaptics_ts_work_func: i2c_transfer failed\n");
 		else
@@ -578,6 +592,7 @@ static void synaptics_ts_work_func(struct work_struct *work)
 			hrtimer_start(&ts->timer, ktime_set(1, 0), HRTIMER_MODE_REL);
 		else
 			i2c_smbus_write_byte_data(ts->client, ts->page_table[8].value + 1, 4);
+		mutex_unlock(&syn_mutex);
 	} else {
 
 		int finger_data[ts->finger_support][4];
@@ -705,8 +720,11 @@ static void synaptics_ts_work_func(struct work_struct *work)
 								ts->pre_finger_data[loop_i + 1][1] = finger_data[loop_i][1];
 								printk(KERN_INFO "[TP] S%d@%d, %d\n", loop_i + 1,
 									ts->pre_finger_data[loop_i + 1][0], ts->pre_finger_data[loop_i + 1][1]);
-								if (finger_count == ts->finger_support)
+								if (finger_count == ts->finger_support) {
+									mutex_lock(&syn_mutex);
 									i2c_smbus_write_byte_data(ts->client, ts->page_table[12].value - 1, 1);
+									mutex_unlock(&syn_mutex);
+								}
 								else if (!ts->pre_finger_data[0][0] && finger_count > 1)
 									ts->pre_finger_data[0][0] = 1;
 							}
@@ -863,15 +881,18 @@ static void synaptics_ts_work_func(struct work_struct *work)
 								finger_data[loop_i][1], finger_data[loop_i][2],
 								finger_data[loop_i][3]);
 					}
-					if (((finger_release_changed >> loop_i) & 0x1) && ts->pre_finger_data[0][0] < 2)
+					if (((finger_release_changed >> loop_i) & 0x1) && ts->pre_finger_data[0][0] < 2) {
+						mutex_lock(&syn_mutex);
 						i2c_smbus_write_byte_data(ts->client, ts->page_table[12].value - 1, 1);
-						if (!finger_count && !ts->pre_finger_data[0][0]
-							&& (jiffies > (ts->timestamp + 15 * HZ) || (finger_data[loop_i][1] > ts->raw_base
-							&& abs(ts->pre_finger_data[loop_i + 1][1] - finger_data[loop_i][1]) > ts->raw_ref))) {
-							ts->pre_finger_data[0][0] = 2;
-							printk(KERN_INFO "[TP] Touch Calibration Confirmed\n");
-						} else if (!finger_count)
-							ts->pre_finger_data[0][0] = 0;
+						mutex_unlock(&syn_mutex);
+					}
+					if (!finger_count && !ts->pre_finger_data[0][0]
+						&& (jiffies > (ts->timestamp + 15 * HZ) || (finger_data[loop_i][1] > ts->raw_base
+						&& abs(ts->pre_finger_data[loop_i + 1][1] - finger_data[loop_i][1]) > ts->raw_ref))) {
+						ts->pre_finger_data[0][0] = 2;
+						printk(KERN_INFO "[TP] Touch Calibration Confirmed\n");
+					} else if (!finger_count)
+						ts->pre_finger_data[0][0] = 0;
 				}
 				base += 5;
 			}
@@ -912,36 +933,43 @@ static int synaptics_ts_probe(
 	struct synaptics_i2c_rmi_platform_data *pdata;
 	uint32_t panel_version;
 
+	mutex_lock(&syn_mutex);
 	if (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C)) {
 		printk(KERN_ERR "[TP] synaptics_ts_probe: need I2C_FUNC_I2C\n");
 		ret = -ENODEV;
 		goto err_check_functionality_failed;
 	}
+	mutex_unlock(&syn_mutex);
 
 	ts = kzalloc(sizeof(*ts), GFP_KERNEL);
 	if (ts == NULL) {
 		ret = -ENOMEM;
 		goto err_alloc_data_failed;
 	}
+	mutex_lock(&syn_mutex);
 	ts->client = client;
 	i2c_set_clientdata(client, ts);
+	mutex_unlock(&syn_mutex);
 	pdata = client->dev.platform_data;
 	if (pdata)
 		ts->power = pdata->power;
 	if (ts->power)
 		ret = ts->power(1);
 
+	mutex_lock(&syn_mutex);
 	for (loop_i = 0; loop_i < 10; loop_i++) {
 		if (i2c_smbus_read_byte_data(ts->client, 0x00DD) >= 0)
 			break;
 		msleep(10);
 	}
+	mutex_unlock(&syn_mutex);
 
 	if (loop_i == 10) {
 		printk(KERN_ERR "[TP] i2c_smbus_read_byte_data failed\n");
 		goto err_detect_failed;
 	}
 
+	mutex_lock(&syn_mutex);
 	for (loop_i = 0x00DD, loop_j = 0; loop_i <= 0x00EE; loop_i++) {
 		ts->page_table[loop_j].addr = loop_i;
 		ts->page_table[loop_j].value = i2c_smbus_read_byte_data(ts->client, loop_i);
@@ -956,6 +984,7 @@ static int synaptics_ts_probe(
 		i2c_smbus_read_byte_data(ts->client, ts->page_table[6].value + 2) << 8;
 	printk(KERN_INFO "[TP] %s: panel_version: %x\n", __func__, panel_version);
 	syn_panel_version = panel_version;
+	mutex_unlock(&syn_mutex);
 
 	if (pdata) {
 		while (pdata->version > panel_version) {
@@ -967,6 +996,7 @@ static int synaptics_ts_probe(
 		ts->sensitivity_adjust = pdata->sensitivity_adjust;
 		ts->finger_support = pdata->finger_support;
 	}
+	mutex_lock(&syn_mutex);
 	ts->max[0] = max_x =
 		i2c_smbus_read_byte_data(ts->client, ts->page_table[2].value+6) |
 		i2c_smbus_read_byte_data(ts->client, ts->page_table[2].value+7) << 8;
@@ -975,6 +1005,7 @@ static int synaptics_ts_probe(
 		i2c_smbus_read_byte_data(ts->client, ts->page_table[2].value+8) |
 		i2c_smbus_read_byte_data(ts->client, ts->page_table[2].value+9) << 8;
 	printk(KERN_INFO"[TP] max_x: %X, max_y: %X\n", max_x, max_y);
+	mutex_unlock(&syn_mutex);
 
 	if (pdata->abs_x_min == pdata->abs_x_max && pdata->abs_y_min == pdata->abs_y_max) {
 		pdata->abs_x_min = 0;
@@ -1054,7 +1085,9 @@ static int synaptics_ts_probe(
 				client->name, ts);
 		if (ret == 0) {
 			/* enable abs int */
+			mutex_lock(&syn_mutex);
 			ret = i2c_smbus_write_byte_data(ts->client, ts->page_table[8].value + 1, 4);
+			mutex_unlock(&syn_mutex);
 			if (ret)
 				free_irq(client->irq, ts);
 		}
@@ -1145,7 +1178,9 @@ static int synaptics_ts_suspend(struct i2c_client *client, pm_message_t mesg)
 #ifdef CONFIG_TOUCHSCREEN_SYNAPTICS_SWEEP2WAKE
 	if (!s2w_active()) {
 #endif
+	mutex_lock(&syn_mutex);
 	ret = i2c_smbus_write_byte_data(client, ts->page_table[8].value, 0x01); /* sleep */
+	mutex_unlock(&syn_mutex);
 	if (ret < 0)
 		printk(KERN_ERR "[TP] synaptics_ts_suspend: i2c_smbus_write_byte_data failed\n");
 #ifdef CONFIG_TOUCHSCREEN_SYNAPTICS_SWEEP2WAKE
@@ -1173,7 +1208,9 @@ static int synaptics_ts_resume(struct i2c_client *client)
 
 #ifdef CONFIG_TOUCHSCREEN_SYNAPTICS_SWEEP2WAKE
 	if (s2w_active()) {
+		mutex_lock(&syn_mutex);
 		ret = i2c_smbus_write_byte_data(client, ts->page_table[8].value, 0x01); /* sleep */
+		mutex_unlock(&syn_mutex);
 		if (ret < 0)
 			printk(KERN_ERR "[TP] synaptics_ts_suspend: i2c_smbus_write_byte_data failed\n");
 		msleep(150);
@@ -1185,7 +1222,9 @@ static int synaptics_ts_resume(struct i2c_client *client)
 	}
 #endif
 
+	mutex_lock(&syn_mutex);
 	ret = i2c_smbus_write_byte_data(client, ts->page_table[8].value, 0x00); /* wake */
+	mutex_unlock(&syn_mutex);
 	msleep(100);
 
 	synaptics_init_panel(ts);
