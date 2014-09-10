@@ -555,6 +555,7 @@ static void synaptics_ts_work_func(struct work_struct *work)
 
 	start_reg = ts->page_table[9].value;
 	ret = i2c_syn_read(ts->client, start_reg, buf, sizeof(buf));
+	msleep(10);
 	if (ret < 0 || ((buf[0] & 0x0F))) {
 		if (ret < 0)
 			printk(KERN_ERR "[TP] synaptics_ts_work_func: i2c_transfer failed\n");
