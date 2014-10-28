@@ -48,7 +48,12 @@ obj-$(CONFIG_MACH_PRIMOC) += s5k4e5yx.o s5k4e5yx_reg_pro.o
 obj-$(CONFIG_MACH_KINGDOM) += s5k4e5yx.o s5k4e5yx_reg.o
 endif
 
+ifdef CONFIG_MACH_SAGA
+obj-$(CONFIG_S5K4E1GX) += s5k4e1gx_saga.o s5k4e1gx_reg.o
+else
 obj-$(CONFIG_S5K4E1GX) += s5k4e1gx.o s5k4e1gx_reg.o
+endif
+
 ifdef CONFIG_S5K6AAFX
 obj-$(CONFIG_MACH_FLYER) += s5k6aafx.o s5k6aafx_reg_flyer.o s5k6aafx_reg_flyer_cob.o
 endif
@@ -93,7 +98,11 @@ else
     ifdef CONFIG_MACH_BLISSC
       obj-$(CONFIG_MT9V113) += mt9v113.o mt9v113_reg_lens_9251.o
     else
-      obj-$(CONFIG_MT9V113) += mt9v113.o mt9v113_reg.o
+	  ifdef CONFIG_MACH_SAGA
+		obj-$(CONFIG_MT9V113) += mt9v113_saga.o mt9v113_reg.o
+	  else
+		obj-$(CONFIG_MT9V113) += mt9v113.o mt9v113_reg.o
+	  endif
     endif
   endif
   obj-$(CONFIG_VX6953) += vx6953.o vx6953_reg.o
