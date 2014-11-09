@@ -46,6 +46,23 @@ config TOUCHSCREEN_ATMEL_SWEEP2WAKE
     depends on TOUCHSCREEN_ATMEL
     default n
 
+config TOUCHSCREEN_SAGA_SWEEP2WAKE
+	bool "Saga atmel driver with s2w feature"
+	depends on MACH_SAGA
+	default n
+	help
+	  Enable this to compile a different atmel driver to enable s2w on saga
+
+choice
+	prompt "SAGA SWEEP2WAKE OPTIONS"
+	default W_BACKLIGHT
+	depends on TOUCHSCREEN_SAGA_SWEEP2WAKE
+config W_BACKLIGHT
+	bool "With Backlight"
+config WO_BACKLIGHT
+	bool "Without Backlight"
+endchoice
+
 config TOUCHSCREEN_NTRIG
 	tristate "N-trig spi touchscreen"
 	depends on SPI_TOUCHSCREEN_NTRIG
