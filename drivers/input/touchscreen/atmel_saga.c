@@ -131,12 +131,17 @@ static void multi_input_report(struct atmel_ts_data *ts);
 
 #ifdef CONFIG_TOUCHSCREEN_ATMEL_SWEEP2WAKE
 /* Sweep to wake values are
+ * 0 = no sweep2wake
  * 1 = sweep2wake with no backlight
  * 2 = sweep2wake with backlight
  */
+#ifdef CONFIG_TOUCHSCREEN_ATMEL_SWEEP2WAKE_DISABLED // this conf does not exists
+int s2w_switch = 0;
+int s2w_temp = 0;
+#elif defined(CONFIG_WO_BACKLIGHT)
 int s2w_switch = 1;
 int s2w_temp = 1;
-#ifdef CONFIG_W_BACKLIGHT
+#elif defined(CONFIG_W_BACKLIGHT)
 int s2w_switch = 2;
 int s2w_temp = 2;
 #endif
@@ -146,11 +151,11 @@ static struct input_dev * sweep2wake_pwrdev;
 static struct led_classdev * sweep2wake_leddev;
 static DEFINE_MUTEX(pwrlock);
 
-extern void sweep2wake_setdev(struct input_dev * input_device) {
+extern void sweep2wake_saga_setdev(struct input_dev * input_device) {
 	sweep2wake_pwrdev = input_device;
 	return;
 }
-EXPORT_SYMBOL(sweep2wake_setdev);
+EXPORT_SYMBOL(sweep2wake_saga_setdev);
 
 extern void sweep2wake_setleddev(struct led_classdev * led_dev) {
 	sweep2wake_leddev = led_dev;
@@ -2549,10 +2554,16 @@ static int atmel_ts_suspend(struct i2c_client *client, pm_message_t mesg)
 			ts->ATCH_EXT, 4);
 	}
 
+#ifdef CONFIG_TOUCHSCREEN_ATMEL_SWEEP2WAKE
+	if (s2w_switch == 0) {
+#endif
 		i2c_atmel_write_byte_data(client,
 			get_object_address(ts, GEN_POWERCONFIG_T7) + T7_CFG_IDLEACQINT, 0x0);
 		i2c_atmel_write_byte_data(client,
 			get_object_address(ts, GEN_POWERCONFIG_T7) + T7_CFG_ACTVACQINT, 0x0);
+#ifdef CONFIG_TOUCHSCREEN_ATMEL_SWEEP2WAKE
+ 	}
+#endif
 
 	printk(KERN_INFO "%s:[TP]done\n", __func__);
 	return 0;
@@ -2590,6 +2601,9 @@ static int atmel_ts_resume(struct i2c_client *client)
 		}
 	}
 
+#ifdef CONFIG_TOUCHSCREEN_ATMEL_SWEEP2WAKE
+	if (s2w_switch == 0) {
+#endif
 		if (!ts->status && ts->wlc_status && ts->wlc_config[0])
 			i2c_atmel_write(ts->client,
 				get_object_address(ts, GEN_POWERCONFIG_T7),
@@ -2600,6 +2614,9 @@ static int atmel_ts_resume(struct i2c_client *client)
 				get_object_address(ts, GEN_POWERCONFIG_T7),
 				ts->config_setting[ts->status].config_T7,
 				get_object_size(ts, GEN_POWERCONFIG_T7));
+#ifdef CONFIG_TOUCHSCREEN_ATMEL_SWEEP2WAKE
+	}
+#endif
 
 	if (ts->id->version == 0x16) {
 		if (ts->config_setting[CONNECTED].config[0] && ts->status &&
@@ -2638,8 +2655,13 @@ static int atmel_ts_resume(struct i2c_client *client)
 				T6_CFG_CALIBRATE, 0x55);
 		}
 	}
+#ifdef CONFIG_TOUCHSCREEN_ATMEL_SWEEP2WAKE
+	if (s2w_switch == 0) {
+#endif
 		enable_irq(client->irq);
 #ifdef CONFIG_TOUCHSCREEN_ATMEL_SWEEP2WAKE
+	}
+
 	if (s2w_switch_changed == true) {
 		s2w_switch = s2w_temp;
 		s2w_switch_changed = false;
@@ -2699,4 +2721,3 @@ module_exit(atmel_ts_exit);
 
 MODULE_DESCRIPTION("ATMEL Touch driver");
 MODULE_LICENSE("GPL");
-

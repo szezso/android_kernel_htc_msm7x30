@@ -3,6 +3,11 @@
 
 #include <linux/bitops.h>
 
+#ifdef CONFIG_TOUCHSCREEN_SAGA_SWEEP2WAKE
+#include <linux/input.h>
+#include <linux/leds-pm8058.h>
+#endif
+
 #define ATMEL_QT602240_NAME "atmel_qt602240"
 #define ATMEL_MXT224E_NAME "atmel_mxt224e"
 
@@ -498,7 +503,12 @@ struct atmel_config_data {
 };
 
 #ifdef CONFIG_TOUCHSCREEN_ATMEL_SWEEP2WAKE
+#ifdef CONFIG_TOUCHSCREEN_SAGA_SWEEP2WAKE
+extern void sweep2wake_saga_setdev(struct input_dev * input_device);
+extern void sweep2wake_setleddev(struct led_classdev * led_dev);
+#else
 extern void sweep2wake_atmel_setdev(struct input_dev * input_device);
+#endif
 #endif
 
 #endif
