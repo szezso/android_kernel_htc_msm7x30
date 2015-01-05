@@ -1972,10 +1972,9 @@ field ## _store(struct device *dev, struct device_attribute *attr,	\
 {									\
 	pr_info("%s: %s\n", __func__, buf);				\
 	if (size >= sizeof(buffer)) return -EINVAL;			\
-	if (sscanf(buf, "%255s", buffer) == 1) {			\
-		return size;						\
-	}								\
-	return -1;							\
+	strlcpy(buffer, buf, sizeof(buffer));				\
+	strim(buffer);							\
+	return size;							\
 }									\
 static DEVICE_ATTR(field, S_IRUGO | S_IWUSR, field ## _show, field ## _store);
 
