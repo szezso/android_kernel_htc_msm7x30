@@ -5391,7 +5391,6 @@ retry:
 	for (; addr != end; addr += PAGE_SIZE) {
 		pte_t ptent = *(pte++);
 		union mc_target target;
-		int type;
 		struct page *page;
 		struct page_cgroup *pc;
 		swp_entry_t ent;
