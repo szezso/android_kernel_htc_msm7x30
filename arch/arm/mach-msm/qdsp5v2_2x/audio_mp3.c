@@ -1828,7 +1828,7 @@ done:
 	return rc;
 }
 
-int audmp3_fsync(struct file *file, loff_t start, loff_t end, int datasync)
+static int audmp3_fsync(struct file *file, loff_t start, loff_t end, int datasync)
 {
 	struct audio *audio = file->private_data;
 
