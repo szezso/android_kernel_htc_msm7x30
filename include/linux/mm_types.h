@@ -46,7 +46,16 @@ struct page {
 	struct {
 		union {
 			pgoff_t index;		/* Our offset within mapping. */
-			void *freelist;		/* slub first free object */
+			void *freelist;		/* slub/slob first free object */
+			bool pfmemalloc;	/* If set by the page allocator,
+						 * ALLOC_NO_WATERMARKS was set
+						 * and the low watermark was not
+						 * met implying that the system
+						 * is under some pressure. The
+						 * caller should try ensure
+						 * this page is only used to
+						 * free other pages.
+						 */
 		};
 
 		union {
@@ -61,11 +70,12 @@ struct page {
 							 * & limit reverse map searches.
 							 */
 
-					struct {
+					struct { /* SLUB */
 						unsigned inuse:16;
 						unsigned objects:15;
 						unsigned frozen:1;
 					};
+					int units;	/* SLOB */
 				};
 				atomic_t _count;		/* Usage count, see below. */
 			};
@@ -87,6 +97,8 @@ struct page {
 			short int pobjects;
 #endif
 		};
+
+		struct list_head list;	/* slobs list of pages */
 	};
 
 	/* Remainder is not double word aligned */
@@ -307,17 +319,6 @@ struct mm_struct {
 
 	/* Architecture-specific MM context */
 	mm_context_t context;
-
-	/* Swap token stuff */
-	/*
-	 * Last value of global fault stamp as seen by this process.
-	 * In other words, this value gives an indication of how long
-	 * it has been since this task got the token.
-	 * Look at mm/thrash.c
-	 */
-	unsigned int faultstamp;
-	unsigned int token_priority;
-	unsigned int last_interval;
 
 	unsigned long flags; /* Must use atomic bitops to access the bits */
 

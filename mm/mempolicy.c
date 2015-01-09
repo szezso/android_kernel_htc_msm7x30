@@ -93,6 +93,7 @@
 
 #include <asm/tlbflush.h>
 #include <asm/uaccess.h>
+#include <linux/random.h>
 
 #include "internal.h"
 
@@ -389,7 +390,7 @@ static void mpol_rebind_policy(struct mempolicy *pol, const nodemask_t *newmask,
 {
 	if (!pol)
 		return;
-	if (!mpol_store_user_nodemask(pol) && step == 0 &&
+	if (!mpol_store_user_nodemask(pol) && step == MPOL_REBIND_ONCE &&
 	    nodes_equal(pol->w.cpuset_mems_allowed, *newmask))
 		return;
 
@@ -962,8 +963,8 @@ static int migrate_to_node(struct mm_struct *mm, int source, int dest,
  *
  * Returns the number of page that could not be moved.
  */
-int do_migrate_pages(struct mm_struct *mm,
-	const nodemask_t *from_nodes, const nodemask_t *to_nodes, int flags)
+int do_migrate_pages(struct mm_struct *mm, const nodemask_t *from,
+		     const nodemask_t *to, int flags)
 {
 	int busy = 0;
 	int err;
@@ -975,7 +976,7 @@ int do_migrate_pages(struct mm_struct *mm,
 
 	down_read(&mm->mmap_sem);
 
-	err = migrate_vmas(mm, from_nodes, to_nodes, flags);
+	err = migrate_vmas(mm, from, to, flags);
 	if (err)
 		goto out;
 
@@ -1010,14 +1011,34 @@ int do_migrate_pages(struct mm_struct *mm,
 	 * moved to an empty node, then there is nothing left worth migrating.
 	 */
 
-	tmp = *from_nodes;
+	tmp = *from;
 	while (!nodes_empty(tmp)) {
 		int s,d;
 		int source = -1;
 		int dest = 0;
 
 		for_each_node_mask(s, tmp) {
-			d = node_remap(s, *from_nodes, *to_nodes);
+
+			/*
+			 * do_migrate_pages() tries to maintain the relative
+			 * node relationship of the pages established between
+			 * threads and memory areas.
+                         *
+			 * However if the number of source nodes is not equal to
+			 * the number of destination nodes we can not preserve
+			 * this node relative relationship.  In that case, skip
+			 * copying memory from a node that is in the destination
+			 * mask.
+			 *
+			 * Example: [2,3,4] -> [3,4,5] moves everything.
+			 *          [0-7] - > [3,4,5] moves only 0,1,2,6,7.
+			 */
+
+			if ((nodes_weight(*from) != nodes_weight(*to)) &&
+						(node_isset(s, *to)))
+				continue;
+
+			d = node_remap(s, *from, *to);
 			if (s == d)
 				continue;
 
@@ -1077,8 +1098,8 @@ static void migrate_page_add(struct page *page, struct list_head *pagelist,
 {
 }
 
-int do_migrate_pages(struct mm_struct *mm,
-	const nodemask_t *from_nodes, const nodemask_t *to_nodes, int flags)
+int do_migrate_pages(struct mm_struct *mm, const nodemask_t *from,
+		     const nodemask_t *to, int flags)
 {
 	return -ENOSYS;
 }
@@ -1328,12 +1349,9 @@ SYSCALL_DEFINE4(migrate_pages, pid_t, pid, unsigned long, maxnode,
 		err = -ESRCH;
 		goto out;
 	}
-	mm = get_task_mm(task);
-	rcu_read_unlock();
+	get_task_struct(task);
 
 	err = -EINVAL;
-	if (!mm)
-		goto out;
 
 	/*
 	 * Check if this process has the right to modify the specified
@@ -1341,14 +1359,13 @@ SYSCALL_DEFINE4(migrate_pages, pid_t, pid, unsigned long, maxnode,
 	 * capabilities, superuser privileges or the same
 	 * userid as the target process.
 	 */
-	rcu_read_lock();
 	tcred = __task_cred(task);
 	if (cred->euid != tcred->suid && cred->euid != tcred->uid &&
 	    cred->uid  != tcred->suid && cred->uid  != tcred->uid &&
 	    !capable(CAP_SYS_NICE)) {
 		rcu_read_unlock();
 		err = -EPERM;
-		goto out;
+		goto out_put;
 	}
 	rcu_read_unlock();
 
@@ -1356,26 +1373,39 @@ SYSCALL_DEFINE4(migrate_pages, pid_t, pid, unsigned long, maxnode,
 	/* Is the user allowed to access the target nodes? */
 	if (!nodes_subset(*new, task_nodes) && !capable(CAP_SYS_NICE)) {
 		err = -EPERM;
-		goto out;
+		goto out_put;
 	}
 
 	if (!nodes_subset(*new, node_states[N_HIGH_MEMORY])) {
 		err = -EINVAL;
-		goto out;
+		goto out_put;
 	}
 
 	err = security_task_movememory(task);
 	if (err)
+		goto out_put;
+
+	mm = get_task_mm(task);
+	put_task_struct(task);
+
+	if (!mm) {
+		err = -EINVAL;
 		goto out;
+	}
 
 	err = do_migrate_pages(mm, old, new,
 		capable(CAP_SYS_NICE) ? MPOL_MF_MOVE_ALL : MPOL_MF_MOVE);
+
+	mmput(mm);
 out:
-	if (mm)
-		mmput(mm);
 	NODEMASK_SCRATCH_FREE(scratch);
 
 	return err;
+
+out_put:
+	put_task_struct(task);
+	goto out;
+
 }
 
 
@@ -1668,6 +1698,21 @@ static inline unsigned interleave_nid(struct mempolicy *pol,
 		return offset_il_node(pol, vma, off);
 	} else
 		return interleave_nodes(pol);
+}
+
+/*
+ * Return the bit number of a random bit set in the nodemask.
+ * (returns -1 if nodemask is empty)
+ */
+int node_random(const nodemask_t *maskp)
+{
+	int w, bit = -1;
+
+	w = nodes_weight(*maskp);
+	if (w)
+		bit = bitmap_ord_to_pos(maskp->bits,
+			get_random_int() % w, MAX_NUMNODES);
+	return bit;
 }
 
 #ifdef CONFIG_HUGETLBFS

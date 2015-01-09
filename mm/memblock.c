@@ -342,6 +342,9 @@ static int __init_memblock memblock_add_region(struct memblock_type *type,
 	phys_addr_t end = base + memblock_cap_size(base, &size);
 	int i, nr_new;
 
+	if (!size)
+		return 0;
+
 	/* special case for empty array */
 	if (type->regions[0].size == 0) {
 		WARN_ON(type->cnt != 1 || type->total_size);
@@ -442,6 +445,9 @@ static int __init_memblock memblock_isolate_range(struct memblock_type *type,
 
 	*start_rgn = *end_rgn = 0;
 
+	if (!size)
+		return 0;
+
 	/* we'll create at most two more regions */
 	while (type->cnt + 2 > type->max)
 		if (memblock_double_array(type) < 0)
@@ -526,7 +532,6 @@ int __init_memblock memblock_reserve(phys_addr_t base, phys_addr_t size)
 		     (unsigned long long)base,
 		     (unsigned long long)base + size,
 		     (void *)_RET_IP_);
-	BUG_ON(0 == size);
 
 	return memblock_add_region(_rgn, base, size, MAX_NUMNODES);
 }
@@ -535,9 +540,9 @@ int __init_memblock memblock_reserve(phys_addr_t base, phys_addr_t size)
  * __next_free_mem_range - next function for for_each_free_mem_range()
  * @idx: pointer to u64 loop variable
  * @nid: nid: node selector, %MAX_NUMNODES for all nodes
- * @p_start: ptr to phys_addr_t for start address of the range, can be %NULL
- * @p_end: ptr to phys_addr_t for end address of the range, can be %NULL
- * @p_nid: ptr to int for nid of the range, can be %NULL
+ * @out_start: ptr to phys_addr_t for start address of the range, can be %NULL
+ * @out_end: ptr to phys_addr_t for end address of the range, can be %NULL
+ * @out_nid: ptr to int for nid of the range, can be %NULL
  *
  * Find the first free area from *@idx which matches @nid, fill the out
  * parameters, and update *@idx for the next iteration.  The lower 32bit of

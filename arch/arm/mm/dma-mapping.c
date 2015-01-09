@@ -569,7 +569,7 @@ static void *__alloc_remap_buffer(struct device *dev, size_t size, gfp_t gfp,
 	*ret_page = page;
 	return ptr;
 }
-
+#if 0
 static void *__alloc_from_pool(struct device *dev, size_t size,
 			       struct page **ret_page, const void *caller)
 {
@@ -620,7 +620,7 @@ static int __free_from_pool(void *cpu_addr, size_t size)
 	arm_vmregion_free(&coherent_head, c);
 	return 1;
 }
-
+#endif
 static void *__alloc_from_contiguous(struct device *dev, size_t size,
 				     pgprot_t prot, struct page **ret_page,
 				     bool no_kernel_mapping)
@@ -639,14 +639,14 @@ static void *__alloc_from_contiguous(struct device *dev, size_t size,
 	*ret_page = page;
 	return page_address(page);
 }
-
+#if 0
 static void __free_from_contiguous(struct device *dev, struct page *page,
 				   size_t size)
 {
 	__dma_remap(page, size, pgprot_kernel, false);
 	dma_release_from_contiguous(dev, page, size >> PAGE_SHIFT);
 }
-
+#endif
 static inline pgprot_t __get_dma_pgprot(struct dma_attrs *attrs, pgprot_t prot)
 {
 	if (dma_get_attr(DMA_ATTR_WRITE_COMBINE, attrs))
