@@ -57,6 +57,7 @@
 #else
 #include <linux/usb/msm_hsusb.h>
 #endif
+#include <mach/rpc_hsusb.h>
 #include <mach/msm_spi.h>
 #include <mach/dma.h>
 #include <linux/android_pmem.h>
@@ -110,6 +111,9 @@
 #include <mach/cable_detect.h>
 #ifdef CONFIG_BT
 #include <mach/htc_bdaddress.h>
+#endif
+#ifdef CONFIG_USB_ACCESSORY_DETECT_BY_ADC
+#include <mach/cable_detect.h>
 #endif
 
 extern struct platform_device lcdc_sonywvga_panel_device;
@@ -3067,7 +3071,7 @@ static struct msm_usb_host_platform_data msm_usb_host_pdata = {
 };
 #endif
 
-#ifdef CONFIG_USB_MSM_OTG_72K
+#if 0 //ifdef CONFIG_USB_MSM_OTG_72K
 static int hsusb_rpc_connect(int connect)
 {
 	if (connect)
@@ -3075,9 +3079,7 @@ static int hsusb_rpc_connect(int connect)
 	else
 		return msm_hsusb_rpc_close();
 }
-#endif
 
-#ifdef CONFIG_USB_MSM_OTG_72K
 static struct vreg *vreg_3p3;
 static int msm_hsusb_ldo_init(int init)
 {
@@ -3140,12 +3142,19 @@ static int msm_hsusb_ldo_set_voltage(int mV)
 #endif
 
 static int phy_init_seq[] = { 0x06, 0x36, 0x0C, 0x31, 0x31, 0x32, 0x1, 0x0D, 0x1, 0x10, -1 };
-static struct msm_otg_platform_data msm_otg_pdata = {
+static struct msm_hsusb_gadget_platform_data msm_gadget_pdata = {
 	.phy_init_seq		= phy_init_seq,
-    .mode                   = USB_PERIPHERAL,
-	.otg_control		= OTG_PMIC_CONTROL,
-	.power_budget		= 750,
-	.phy_type		= CI_45NM_INTEGRATED_PHY,
+	.is_phy_status_timer_on = 1,
+};
+
+static struct msm_otg_platform_data msm_otg_pdata = {
+#ifdef CONFIG_USB_EHCI_MSM_72K
+	.vbus_power = msm_hsusb_vbus_power,
+#endif
+	.pemp_level		= PRE_EMPHASIS_WITH_20_PERCENT,
+	.cdr_autoreset		= CDR_AUTO_RESET_DISABLE,
+	.drv_ampl		= HS_DRV_AMPLITUDE_DEFAULT,
+	.se1_gating		= SE1_GATING_DISABLE,
 };
 
 static struct android_pmem_platform_data android_pmem_pdata = {
