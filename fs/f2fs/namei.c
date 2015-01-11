@@ -108,7 +108,7 @@ static inline void set_cold_files(struct f2fs_sb_info *sbi, struct inode *inode,
 	}
 }
 
-static int f2fs_create(struct inode *dir, struct dentry *dentry, int mode,
+static int f2fs_create(struct inode *dir, struct dentry *dentry, umode_t mode,
 						struct nameidata *nd)
 {
 	struct super_block *sb = dir->i_sb;
@@ -348,7 +348,7 @@ static int f2fs_rmdir(struct inode *dir, struct dentry *dentry)
 }
 
 static int f2fs_mknod(struct inode *dir, struct dentry *dentry,
-				int mode, dev_t rdev)
+				umode_t mode, dev_t rdev)
 {
 	struct super_block *sb = dir->i_sb;
 	struct f2fs_sb_info *sbi = F2FS_SB(sb);
