@@ -21,6 +21,9 @@ struct bio;
 #define SWAP_FLAG_PRIO_SHIFT	0
 #define SWAP_FLAG_DISCARD	0x10000 /* discard swap cluster after use */
 
+#define SWAP_FLAGS_VALID	(SWAP_FLAG_PRIO_MASK | SWAP_FLAG_PREFER | \
+				 SWAP_FLAG_DISCARD)
+
 static inline int current_is_kswapd(void)
 {
 	return current->flags & PF_KSWAPD;
@@ -227,6 +230,7 @@ extern void lru_add_page_tail(struct zone* zone,
 extern void activate_page(struct page *);
 extern void mark_page_accessed(struct page *);
 extern void lru_add_drain(void);
+extern void lru_add_drain_cpu(int cpu);
 extern int lru_add_drain_all(void);
 extern void rotate_reclaimable_page(struct page *page);
 extern void deactivate_page(struct page *page);
@@ -345,27 +349,11 @@ extern int swap_type_of(dev_t, sector_t, struct block_device **);
 extern unsigned int count_swap_pages(int, int);
 extern sector_t map_swap_page(struct page *, struct block_device **);
 extern sector_t swapdev_block(int, pgoff_t);
+extern int page_swapcount(struct page *);
+extern struct swap_info_struct *page_swap_info(struct page *);
 extern int reuse_swap_page(struct page *);
 extern int try_to_free_swap(struct page *);
 struct backing_dev_info;
-
-/* linux/mm/thrash.c */
-extern struct mm_struct *swap_token_mm;
-extern void grab_swap_token(struct mm_struct *);
-extern void __put_swap_token(struct mm_struct *);
-extern void disable_swap_token(struct mem_cgroup *memcg);
-
-/* Only allow swap token to have effect if swap is full */
-static inline int has_swap_token(struct mm_struct *mm)
-{
-	return (mm == swap_token_mm && vm_swap_full());
-}
-
-static inline void put_swap_token(struct mm_struct *mm)
-{
-	if (has_swap_token(mm))
-		__put_swap_token(mm);
-}
 
 #ifdef CONFIG_CGROUP_MEM_RES_CTLR
 extern void
@@ -464,6 +452,11 @@ static inline void delete_from_swap_cache(struct page *page)
 {
 }
 
+static inline int page_swapcount(struct page *page)
+{
+	return 0;
+}
+
 #define reuse_swap_page(page)	(page_mapcount(page) == 1)
 
 static inline int try_to_free_swap(struct page *page)
@@ -476,24 +469,6 @@ static inline swp_entry_t get_swap_page(void)
 	swp_entry_t entry;
 	entry.val = 0;
 	return entry;
-}
-
-/* linux/mm/thrash.c */
-static inline void put_swap_token(struct mm_struct *mm)
-{
-}
-
-static inline void grab_swap_token(struct mm_struct *mm)
-{
-}
-
-static inline int has_swap_token(struct mm_struct *mm)
-{
-	return 0;
-}
-
-static inline void disable_swap_token(struct mem_cgroup *memcg)
-{
 }
 
 static inline void
