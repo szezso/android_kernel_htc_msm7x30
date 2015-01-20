@@ -51,7 +51,7 @@ extern struct platform_device msm_device_mddi0;
 */
 #define MSM_V4L2_VIDEO_OVERLAY_BUF_SIZE 2764800
 
-#define MSM_FB_SIZE		roundup((800 * ALIGN(480, 32) * 4 * 3), 4096) /* 4 bpp x 3 pages, Note: must be multiple of 4096 */
+#define MSM_FB_SIZE		roundup((800 * 480 * 4 * 3), 4096) /* 4 bpp x 3 pages, Note: must be multiple of 4096 */
 
 #ifdef CONFIG_ION_MSM
 #define MSM_ION_CAMERA_SIZE	MSM_PMEM_ADSP_SIZE
