@@ -230,7 +230,7 @@ static unsigned int saga_wifi_status(struct device *dev)
 
 static unsigned int saga_wifislot_type = MMC_TYPE_SDIO_WIFI;
 static struct mmc_platform_data saga_wifi_data = {
-	.ocr_mask		= MMC_VDD_28_29,
+	.ocr_mask		= MMC_VDD_20_21,
 	.status			= saga_wifi_status,
 	.register_status_notify	= saga_wifi_status_register,
 	.embedded_sdio		= &saga_wifi_emb_data,
