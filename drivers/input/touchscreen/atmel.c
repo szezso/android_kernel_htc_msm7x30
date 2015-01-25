@@ -125,6 +125,8 @@ static void restore_normal_threshold(struct atmel_ts_data *ts);
 static void confirm_calibration(struct atmel_ts_data *ts, uint8_t recal, uint8_t reason);
 static void multi_input_report(struct atmel_ts_data *ts);
 
+static bool scr_suspended = false;
+
 #ifdef CONFIG_TOUCHSCREEN_ATMEL_SWEEP2WAKE
 /* S2W starts */
 static int s2w_register_threshold = 9; /* beyond this threshold the panel will not register to apps */
@@ -141,7 +143,6 @@ static cputime64_t dt2w_start = 0;
 static bool dt2w_screen = false; /* true if last touch was on display area */
 /* DT2W ends */
 
-static bool scr_suspended = false;
 static bool exec_count = true;
 static bool barrier = false;
 static bool mode = true;
@@ -1434,38 +1435,30 @@ static void compatible_input_report(struct input_dev *idev,
 	if (!press)
 		input_mt_sync(idev);
 	else {
-#ifdef CONFIG_TOUCHSCREEN_ATMEL_SWEEP2WAKE
-		if (!s2w_active() || (s2w_active() && !scr_suspended)) {
-#endif
-		input_report_abs(idev, ABS_MT_PRESSURE, fdata->z);
-		input_report_abs(idev, ABS_MT_TOUCH_MAJOR, fdata->z);
-		input_report_abs(idev, ABS_MT_WIDTH_MAJOR, fdata->w);
-		input_report_abs(idev, ABS_MT_POSITION_X, fdata->x);
-		input_report_abs(idev, ABS_MT_POSITION_Y, fdata->y);
-		input_mt_sync(idev);
-#ifdef CONFIG_TOUCHSCREEN_ATMEL_SWEEP2WAKE
+		if (!scr_suspended) {
+			input_report_abs(idev, ABS_MT_PRESSURE, fdata->z);
+			input_report_abs(idev, ABS_MT_TOUCH_MAJOR, fdata->z);
+			input_report_abs(idev, ABS_MT_WIDTH_MAJOR, fdata->w);
+			input_report_abs(idev, ABS_MT_POSITION_X, fdata->x);
+			input_report_abs(idev, ABS_MT_POSITION_Y, fdata->y);
+			input_mt_sync(idev);
 		}
-#endif
 	}
 }
 
 static void htc_input_report(struct input_dev *idev,
 				struct atmel_finger_data *fdata, uint8_t press, uint8_t last)
 {
-#ifdef CONFIG_TOUCHSCREEN_ATMEL_SWEEP2WAKE
-	if (!s2w_active() || (s2w_active() && !scr_suspended)) {
-#endif
-	if (!press) {
-		input_report_abs(idev, ABS_MT_AMPLITUDE, 0);
-		input_report_abs(idev, ABS_MT_POSITION, BIT(31));
-	} else {
-		input_report_abs(idev, ABS_MT_AMPLITUDE, fdata->z << 16 | fdata->w);
-		input_report_abs(idev, ABS_MT_POSITION,
-			(last ? BIT(31) : 0) | fdata->x << 16 | fdata->y);
+	if (!scr_suspended) {
+		if (!press) {
+			input_report_abs(idev, ABS_MT_AMPLITUDE, 0);
+			input_report_abs(idev, ABS_MT_POSITION, BIT(31));
+		} else {
+			input_report_abs(idev, ABS_MT_AMPLITUDE, fdata->z << 16 | fdata->w);
+			input_report_abs(idev, ABS_MT_POSITION,
+				(last ? BIT(31) : 0) | fdata->x << 16 | fdata->y);
+		}
 	}
-#ifdef CONFIG_TOUCHSCREEN_ATMEL_SWEEP2WAKE
-	}
-#endif
 }
 
 static void multi_input_report(struct atmel_ts_data *ts)
@@ -2858,10 +2851,10 @@ static int atmel_ts_suspend(struct i2c_client *client, pm_message_t mesg)
 
 #ifdef CONFIG_TOUCHSCREEN_ATMEL_SWEEP2WAKE
 	if (s2w_active()) {
-		scr_suspended = true;
 		mode = false;
 	}
 #endif
+	scr_suspended = true;
 
 	if (ts->debug_log_level > 0)
 		printk(KERN_INFO "%s:[TP]done\n", __func__);
@@ -2965,10 +2958,10 @@ static int atmel_ts_resume(struct i2c_client *client)
 
 #ifdef CONFIG_TOUCHSCREEN_ATMEL_SWEEP2WAKE
 	if (s2w_active()) {
-		scr_suspended = false;
 		mode = true;
 	}
 #endif
+	scr_suspended = false;
 
 	if (ts->debug_log_level > 0)
 		printk(KERN_INFO "%s:[TP]done\n", __func__);
