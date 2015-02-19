@@ -1435,7 +1435,7 @@ static void compatible_input_report(struct input_dev *idev,
 		input_mt_sync(idev);
 	else {
 #ifdef CONFIG_TOUCHSCREEN_ATMEL_SWEEP2WAKE
-		if (!s2w_active() || (s2w_active() & !scr_suspended)) {
+		if (!s2w_active() || (s2w_active() && !scr_suspended)) {
 #endif
 		input_report_abs(idev, ABS_MT_PRESSURE, fdata->z);
 		input_report_abs(idev, ABS_MT_TOUCH_MAJOR, fdata->z);
@@ -1453,7 +1453,7 @@ static void htc_input_report(struct input_dev *idev,
 				struct atmel_finger_data *fdata, uint8_t press, uint8_t last)
 {
 #ifdef CONFIG_TOUCHSCREEN_ATMEL_SWEEP2WAKE
-	if (!s2w_active() || (s2w_active() & !scr_suspended)) {
+	if (!s2w_active() || (s2w_active() && !scr_suspended)) {
 #endif
 	if (!press) {
 		input_report_abs(idev, ABS_MT_AMPLITUDE, 0);

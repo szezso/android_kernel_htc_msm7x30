@@ -29,10 +29,26 @@ extern struct platform_device msm_device_mddi0;
 #define PM8058_MPP_PM_TO_SYS(pm_gpio)	   (pm_gpio + PM8058_MPP_BASE)
 #define PM8058_uP_PM_TO_SYS(pm_gpio)	   (pm_gpio + FIRST_BOARD_IRQ + NR_BOARD_IRQS)
 
-#define MSM_LINUX_BASE1		0x04000000
-#define MSM_LINUX_SIZE1		0x1C000000
-#define MSM_LINUX_BASE2		0x20000000
-#define MSM_LINUX_SIZE2		0x0C300000
+/*
+ * Memory map for spade:
+ *
+ * ??????          0    MB             -   5    MB               (  5 MB)
+ * ram console     5    MB (  5242880) -   6    MB (  6291456)   (  1 MB)
+ * ??????          6    MB             -  64    MB               ( 58 MB)
+ * linux1         64    MB ( 67108864) - 256    MB (268435456)   (192 MB)
+ * 256mb offset  256    MB (268435456) - 512    MB (536870912)   (256 MB)
+ * linux2        512    MB (536870912) - 707    MB (741343232)   (195 MB)
+ * adsp          707    MB (741343232) - 737    MB (772800512)   ( 30 MB)
+ * pmem sf       737    MB (772800512) - 768    MB (805306368)   ( 31 MB)
+ *
+ * Please, try to keep this up-to-date if you make changes!
+ */
+
+#define MSM_LINUX_BASE1	0x04000000
+#define MSM_LINUX_SIZE1	0x0C000000
+#define MSM_LINUX_BASE2	0x20000000
+#define MSM_LINUX_SIZE2	0x0C300000
+#define MSM_MEM_256MB_OFFSET	0x10000000
 
 #define MSM_RAM_CONSOLE_BASE	0x00500000
 #define MSM_RAM_CONSOLE_SIZE	0x00100000
@@ -51,7 +67,7 @@ extern struct platform_device msm_device_mddi0;
 */
 #define MSM_V4L2_VIDEO_OVERLAY_BUF_SIZE 2764800
 
-#define MSM_FB_SIZE		roundup((800 * ALIGN(480, 32) * 4 * 3), 4096) /* 4 bpp x 3 pages, Note: must be multiple of 4096 */
+#define MSM_FB_SIZE		roundup((800 * 480 * 4 * 3), 4096) /* 4 bpp x 3 pages, Note: must be multiple of 4096 */
 
 #ifdef CONFIG_ION_MSM
 #define MSM_ION_CAMERA_SIZE	MSM_PMEM_ADSP_SIZE
