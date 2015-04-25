@@ -154,11 +154,11 @@ static inline bool s2w_active(void) {
     return s2w_switch || dt2w_switch;
 }
 
-extern void sweep2wake_setdev(struct input_dev * input_device) {
+extern void sweep2wake_syn_setdev(struct input_dev * input_device) {
 	sweep2wake_pwrdev = input_device;
 	return;
 }
-EXPORT_SYMBOL(sweep2wake_setdev);
+EXPORT_SYMBOL(sweep2wake_syn_setdev);
 
 static void sweep2wake_presspwr(struct work_struct * sweep2wake_presspwr_work) {
 	if (!mutex_trylock(&pwrkeyworklock))
