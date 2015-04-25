@@ -55,8 +55,11 @@ obj-$(CONFIG_TOUCHSCREEN_S3C2410)	+= s3c2410_ts.o
 obj-$(CONFIG_TOUCHSCREEN_ST1232)	+= st1232.o
 obj-$(CONFIG_TOUCHSCREEN_STMPE)		+= stmpe-ts.o
 obj-$(CONFIG_TOUCHSCREEN_TNETV107X)	+= tnetv107x-ts.o
-#obj-$(CONFIG_TOUCHSCREEN_SYNAPTICS_3K)       += synaptics_3200.o synaptics_3k_incell.o rmi_dev.o
+ifdef CONFIG_MACH_PRIMOU
+obj-$(CONFIG_TOUCHSCREEN_SYNAPTICS_3K)       += synaptics_3200.o synaptics_3k_incell.o rmi_dev.o
+else
 obj-$(CONFIG_TOUCHSCREEN_SYNAPTICS_3K)       += synaptics_3k.o
+endif
 obj-$(CONFIG_TOUCHSCREEN_SYNAPTICS_I2C_RMI)	+= synaptics_i2c_rmi.o
 obj-$(CONFIG_TOUCHSCREEN_TOUCHIT213)	+= touchit213.o
 obj-$(CONFIG_TOUCHSCREEN_TOUCHRIGHT)	+= touchright.o
