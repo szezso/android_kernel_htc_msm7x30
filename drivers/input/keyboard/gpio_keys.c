@@ -491,7 +491,7 @@ static int __devinit gpio_keys_probe(struct platform_device *pdev)
 #ifdef CONFIG_TOUCHSCREEN_SYNAPTICS_SWEEP2WAKE
 #ifdef CONFIG_MACH_PRIMOU
         if (!strcmp(input->name, "gpio-keys")) {
-                sweep2wake_setdev(input);
+                sweep2wake_syn_setdev(input);
                 printk(KERN_INFO "[sweep2wake]: set device %s\n", input->name);
         }
 #endif
