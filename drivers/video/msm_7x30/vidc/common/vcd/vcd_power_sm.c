@@ -1,4 +1,4 @@
-/* Copyright (c) 2010, Code Aurora Forum. All rights reserved.
+/* Copyright (c) 2010-2012, Code Aurora Forum. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -11,7 +11,7 @@
  *
  */
 
-#include "vidc_type.h"
+#include <media/msm/vidc_type.h>
 #include "vcd_power_sm.h"
 #include "vcd_core.h"
 #include "vcd.h"
@@ -276,6 +276,11 @@ u32 vcd_disable_clock(struct vcd_dev_ctxt *dev_ctxt)
 	}
 
 	return rc;
+}
+
+u32 vcd_get_curr_perf_level(struct vcd_dev_ctxt *dev_ctxt)
+{
+	return dev_ctxt->reqd_perf_lvl;
 }
 
 u32 vcd_set_perf_level(struct vcd_dev_ctxt *dev_ctxt, u32 perf_lvl)
