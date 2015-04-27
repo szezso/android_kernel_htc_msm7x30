@@ -2945,15 +2945,15 @@ static struct platform_device htc_headset_gpio = {
 /* HTC_HEADSET_PMIC Driver */
 static struct htc_headset_pmic_platform_data htc_headset_pmic_data = {
 	.driver_flag		= DRIVER_HS_PMIC_RPC_KEY,
-	.hpin_gpio		= 0,
-	.hpin_irq		= 0,
-	.key_gpio		= PM8058_GPIO_PM_TO_SYS(HEADSET_BUTTON),
-	.key_irq		= 0,
+	.hpin_gpio			= 0,
+	.hpin_irq			= 0,
+	.key_gpio			= PM8058_GPIO_PM_TO_SYS(HEADSET_BUTTON),
+	.key_irq			= 0,
 	.key_enable_gpio	= 0,
-	.adc_mic		= 14894,
-	.adc_remote		= {0, 3441, 3442, 5855, 5856, 12600},
+	.adc_mic			= 14894,
+	.adc_remote			= {0, 3441, 3442, 5855, 5856, 12600},
 	.hs_controller		= 0,
-	.hs_switch		= 0,
+	.hs_switch			= 0,
 };
 
 static struct platform_device htc_headset_pmic = {
@@ -3921,7 +3921,6 @@ static void __init primou_init(void)
 	buses_init();
 	if (board_mfg_mode()==1) {
 		pm_led_config[0].out_current = 40;
-		htc_headset_mgr_config[0].adc_max = 65535;
 	}
 
 	device_mid = get_model_id();
