@@ -19,7 +19,7 @@
 #include <linux/mfd/msm-adie-codec.h>
 #include <linux/delay.h>
 #include <linux/workqueue.h>
-#include <mach/tpa2051d3.h>
+#include <linux/tpa2051d3.h>
 #include <mach/gpio.h>
 #include <mach/pmic.h>
 #include <mach/dal.h>
@@ -30,6 +30,7 @@
 #include <mach/qdsp5v2/voice.h>
 #include <mach/htc_acoustic_7x30.h>
 #include <mach/htc_acdb_7x30.h>
+#include <mach/debug_mm.h>
 
 static struct mutex bt_sco_lock;
 static struct workqueue_struct *audio_wq;
@@ -50,25 +51,25 @@ static struct vreg *vreg_audio_n1v8;
 
 static struct q5v2_hw_info q5v2_audio_hw[Q5V2_HW_COUNT] = {
 	[Q5V2_HW_HANDSET] = {
-		.max_gain[VOC_NB_INDEX] = 600,
+		.max_gain[VOC_NB_INDEX] = 1000,
 		.min_gain[VOC_NB_INDEX] = -1400,
-		.max_gain[VOC_WB_INDEX] = 600,
+		.max_gain[VOC_WB_INDEX] = 1000,
 		.min_gain[VOC_WB_INDEX] = -1400,
 	},
 	[Q5V2_HW_HEADSET] = {
-		.max_gain[VOC_NB_INDEX] = 0,
-		.min_gain[VOC_NB_INDEX] = -2000,
-		.max_gain[VOC_WB_INDEX] = 0,
-		.min_gain[VOC_WB_INDEX] = -2000,
+		.max_gain[VOC_NB_INDEX] = 800,
+		.min_gain[VOC_NB_INDEX] = -1400,
+		.max_gain[VOC_WB_INDEX] = 800,
+		.min_gain[VOC_WB_INDEX] = -1400,
 	},
 	[Q5V2_HW_SPEAKER] = {
-		.max_gain[VOC_NB_INDEX] = 600,
+		.max_gain[VOC_NB_INDEX] = 1000,
 		.min_gain[VOC_NB_INDEX] = -900,
-		.max_gain[VOC_WB_INDEX] = 600,
+		.max_gain[VOC_WB_INDEX] = 1000,
 		.min_gain[VOC_WB_INDEX] = -900,
 	},
 	[Q5V2_HW_BT_SCO] = {
-		.max_gain[VOC_NB_INDEX] = 0,
+		.max_gain[VOC_NB_INDEX] = 800,
 		.min_gain[VOC_NB_INDEX] = -1500,
 		.max_gain[VOC_WB_INDEX] = 0,
 		.min_gain[VOC_WB_INDEX] = -1500,
@@ -131,7 +132,7 @@ void primou_hs_n1v8_enable(int en)
 {
 	int rc = 0;
 
-	pr_aud_info("%s: %d\n", __func__, en);
+	MM_AUD_INFO("%s: %d\n", __func__, en);
 
 	if (!vreg_audio_n1v8) {
 
@@ -168,7 +169,7 @@ vreg_aud_hp_1v8_faill:
 
 void primou_snddev_poweramp_on(int en)
 {
-	pr_aud_info("%s %d\n", __func__, en);
+	MM_AUD_INFO("%s %d\n", __func__, en);
 
 	if (en) {
 		gpio_set_value(PM8058_GPIO_PM_TO_SYS(PRIMOU_AUD_SPK_SD), 1);
@@ -180,12 +181,12 @@ void primou_snddev_poweramp_on(int en)
 
 void primou_snddev_hsed_pamp_on(int en)
 {
-	pr_aud_info("%s %d\n", __func__, en);
+	MM_AUD_INFO("%s %d\n", __func__, en);
 }
 
 void primou_snddev_pre_hsed_pamp_on(int en)
 {
-	pr_aud_info("%s %d\n", __func__, en);
+	MM_AUD_INFO("%s %d\n", __func__, en);
 
 	if (en) {
 		primou_hs_n1v8_enable(1);
@@ -203,7 +204,7 @@ void primou_snddev_hs_spk_pamp_on(int en)
 void primou_snddev_bt_sco_pamp_on(int en)
 {
 	static int bt_sco_refcount;
-	pr_aud_info("%s %d\n", __func__, en);
+	MM_AUD_INFO("%s %d\n", __func__, en);
 	mutex_lock(&bt_sco_lock);
 	if (en) {
 		if (++bt_sco_refcount == 1)
@@ -225,7 +226,7 @@ void primou_snddev_bt_sco_pamp_on(int en)
 
 void primou_snddev_imic_pamp_on(int en)
 {
-	pr_aud_info("%s: %d\n", __func__, en);
+	MM_AUD_INFO("%s: %d\n", __func__, en);
 
 	if (en) {
 		pmic_hsed_enable(PM_HSED_CONTROLLER_0, PM_HSED_ENABLE_ALWAYS);
@@ -237,7 +238,7 @@ void primou_snddev_imic_pamp_on(int en)
 
 void primou_snddev_emic_pamp_on(int en)
 {
-	pr_aud_info("%s %d\n", __func__, en);
+	MM_AUD_INFO("%s %d\n", __func__, en);
 #if 0
 	if (en)
 		gpio_request(PM8058_GPIO_PM_TO_SYS(PRIMOU_AUD_CODEC_EN), "aud_2v85_en");
@@ -257,13 +258,13 @@ int primou_get_rx_vol(uint8_t hw, int network, int level)
 	maxv = info->max_gain[network];
 	minv = info->min_gain[network];
 	vol = minv + ((maxv - minv) * level) / 100;
-	pr_aud_info("%s(%d, %d, %d) => %d\n", __func__, hw, network, level, vol);
+	MM_AUD_INFO("%s(%d, %d, %d) => %d\n", __func__, hw, network, level, vol);
 	return vol;
 }
 
 void primou_mic_bias_enable(int en, int shift)
 {
-	pr_aud_info("%s: %d\n", __func__, en);
+	MM_AUD_INFO("%s: %d\n", __func__, en);
 
 	if (en) {
 		gpio_set_value(PRIMOU_AUD_CODEC_EN, 1);
@@ -308,7 +309,7 @@ static void audio_work_func(struct work_struct *work)
 	int en = atomic_read(&beats_enabled);
 	int gain;
 
-	pr_aud_info("%s: %d\n", __func__, en);
+	MM_AUD_INFO("%s: %d\n", __func__, en);
 
 	if (en) {
 		for (gain = 0x10; gain >= 0x4; gain -= 0x4) {
@@ -327,20 +328,6 @@ static void audio_work_func(struct work_struct *work)
 
 void primou_enable_beats(int en)
 {
-#if 0
-	pr_aud_info("%s: %d\n", __func__, en);
-	if (!audio_wq) {
-		pr_aud_info("%s: non-wq case\n", __func__);
-		if (en)
-			adie_codec_set_device_analog_volume(NULL, 2, 0x04);
-		else
-			adie_codec_set_device_analog_volume(NULL, 2, 0x14);
-	} else {
-		pr_aud_info("%s: wq case\n", __func__);
-		atomic_set(&beats_enabled, en);
-		queue_work(audio_wq, &audio_work);
-	}
-#endif
 }
 
 static struct q5v2audio_icodec_ops iops = {
@@ -412,7 +399,7 @@ void __init primou_audio_init(void)
 
 	audio_wq = create_workqueue("AUDIO_EFFECT_VOLUME");
 	if (audio_wq == NULL) {
-		pr_aud_info("%s: cannot create workqueue\n", __func__);
+		MM_AUD_INFO("%s: cannot create workqueue\n", __func__);
 	}
 
 }
