@@ -61,7 +61,7 @@ static uint32_t primou_bt_on_table[] = {
 				GPIO_CFG_PULL_UP,
 				GPIO_CFG_4MA),
 	/* BT_CHIP_WAKE */
-	GPIO_CFG(PRIMOU_GPIO_BT_WAKE,
+	GPIO_CFG(PRIMOU_GPIO_BT_CHIP_WAKE,
 				0,
 				GPIO_CFG_OUTPUT,
 				GPIO_CFG_NO_PULL,
@@ -129,7 +129,7 @@ static uint32_t primou_bt_off_table[] = {
 				GPIO_CFG_NO_PULL,
 				GPIO_CFG_4MA),
 	/* BT_CHIP_WAKE */
-	GPIO_CFG(PRIMOU_GPIO_BT_WAKE,
+	GPIO_CFG(PRIMOU_GPIO_BT_CHIP_WAKE,
 				0,
 				GPIO_CFG_OUTPUT,
 				GPIO_CFG_NO_PULL,
@@ -205,7 +205,7 @@ static void primou_config_bt_off(void)
 	/* BT_HOST_WAKE */
 
 	/* BT_CHIP_WAKE */
-	gpio_set_value(PRIMOU_GPIO_BT_WAKE, 0);
+	gpio_set_value(PRIMOU_GPIO_BT_CHIP_WAKE, 0);
 
 	printk(KERN_INFO "[BT]== R OFF ==\n");
 }

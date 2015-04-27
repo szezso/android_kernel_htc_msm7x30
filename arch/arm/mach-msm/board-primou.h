@@ -68,7 +68,7 @@
 #define PRIMOU_GPIO_BT_UART1_CTS      (135)
 #define PRIMOU_GPIO_BT_UART1_RX       (136)
 #define PRIMOU_GPIO_BT_UART1_TX       (137)
-#define PRIMOU_GPIO_BT_WAKE           (31)
+#define PRIMOU_GPIO_BT_CHIP_WAKE      (31)
 #define PRIMOU_GPIO_BT_SHUTDOWN_N     (38)
 #define PRIMOU_GPIO_BT_RESET_N        (41)
 #define PRIMOU_GPIO_BT_HOST_WAKE      (44)
