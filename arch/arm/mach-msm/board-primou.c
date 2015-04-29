@@ -159,6 +159,7 @@ unsigned int primou_get_engineerid(void)
 		(((pull) & 0x3) << 15)          | \
 		(((drvstr) & 0xF) << 17))
 
+#if 0
 static int primou_ts_power(int on)
 {
 	pr_info("%s: power %d\n", __func__, on);
@@ -174,6 +175,7 @@ static int primou_ts_power(int on)
 
 	return 0;
 }
+#endif
 
 static struct synaptics_i2c_rmi_platform_data primou_ts_synaptics_data[] = { /* Synatpics sensor */
 	{
@@ -2531,6 +2533,7 @@ static struct msm_pm_platform_data msm_pm_data[MSM_PM_SLEEP_MODE_NR] = {
 	},
 };
 
+#if 0
 static struct resource qsd_spi_resources[] = {
 	{
 		.name   = "spi_irq_in",
@@ -2565,6 +2568,7 @@ static struct resource qsd_spi_resources[] = {
 		.flags  = IORESOURCE_DMA,
 	},
 };
+#endif
 
 static int msm_qsd_spi_dma_config(void)
 {
@@ -3145,12 +3149,14 @@ void config_primou_usb_id_gpios(bool output)
 	}
 }
 
+#if 0
 static struct cable_detect_platform_data cable_detect_pdata = {
 	.detect_type 		= CABLE_TYPE_PMIC_ADC,
 	.usb_id_pin_gpio 	= PRIMOU_GPIO_USB_ID1_PIN,
 	.config_usb_id_gpios 	= config_primou_usb_id_gpios,
 	.get_adc_cb		= primou_get_usbid_adc,
 };
+
 
 static struct platform_device cable_detect_device = {
 	.name	= "cable_detect",
@@ -3159,6 +3165,7 @@ static struct platform_device cable_detect_device = {
 		.platform_data = &cable_detect_pdata,
 	},
 };
+#endif
 
 static struct platform_device *devices[] __initdata = {
 #if defined(CONFIG_SERIAL_MSM) || defined(CONFIG_MSM_SERIAL_DEBUGGER)
