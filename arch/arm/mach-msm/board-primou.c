@@ -139,7 +139,6 @@ static struct platform_device ion_dev;
 int __init primou_init_panel(void);
 
 static unsigned int engineerid;
-unsigned long msm_fb_base;
 
 unsigned int primou_get_engineerid(void)
 {
@@ -159,20 +158,6 @@ unsigned int primou_get_engineerid(void)
 		(((dir) & 0x1) << 14)           | \
 		(((pull) & 0x3) << 15)          | \
 		(((drvstr) & 0xF) << 17))
-
-
-static void config_gpio_table(uint32_t *table, int len)
-{
-	int n, rc;
-	for (n = 0; n < len; n++) {
-		rc = gpio_tlmm_config(table[n], GPIO_CFG_ENABLE);
-		if (rc) {
-			pr_err("[CAM] %s: gpio_tlmm_config(%#x)=%d\n",
-				__func__, table[n], rc);
-			break;
-		}
-	}
-};
 
 static int primou_ts_power(int on)
 {
@@ -2586,13 +2571,6 @@ static int msm_qsd_spi_dma_config(void)
 	return -ENOMEM;
 }
 
-static struct platform_device qsd_device_spi = {
-	.name		= "spi_qsd",
-	.id		= 0,
-	.num_resources	= ARRAY_SIZE(qsd_spi_resources),
-	.resource	= qsd_spi_resources,
-};
-
 #if defined(CONFIG_RAWCHIP)
 static struct spi_board_info spi_rawchip_board_info[] __initdata = {
 	{
@@ -4077,6 +4055,14 @@ static int __init pmem_audio_size_setup(char *p)
 }
 early_param("pmem_audio_size", pmem_audio_size_setup);
 
+#ifdef CONFIG_ION_MSM
+#ifdef CONFIG_MSM_MULTIMEDIA_USE_ION
+static struct ion_co_heap_pdata co_ion_pdata = {
+	.adjacent_mem_id = INVALID_HEAP_ID,
+	.align = PAGE_SIZE,
+};
+#endif
+
 /*
  * These heaps are listed in the order they will be allocated.
  * Don't swap the order unless you know what you are doing!
@@ -4121,6 +4107,7 @@ static struct platform_device ion_dev = {
 	.id = 1,
 	.dev = { .platform_data = &ion_pdata },
 };
+#endif
 
 static struct memtype_reserve msm7x30_reserve_table[] __initdata = {
 	[MEMTYPE_SMI] = {
