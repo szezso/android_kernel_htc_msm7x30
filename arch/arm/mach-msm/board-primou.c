@@ -3149,7 +3149,7 @@ void config_primou_usb_id_gpios(bool output)
 	}
 }
 
-#if 0
+
 static struct cable_detect_platform_data cable_detect_pdata = {
 	.detect_type 		= CABLE_TYPE_PMIC_ADC,
 	.usb_id_pin_gpio 	= PRIMOU_GPIO_USB_ID1_PIN,
@@ -3165,7 +3165,7 @@ static struct platform_device cable_detect_device = {
 		.platform_data = &cable_detect_pdata,
 	},
 };
-#endif
+
 
 static struct platform_device *devices[] __initdata = {
 #if defined(CONFIG_SERIAL_MSM) || defined(CONFIG_MSM_SERIAL_DEBUGGER)
@@ -3262,6 +3262,8 @@ static struct platform_device *devices[] __initdata = {
 #endif
         &pm8058_leds,
         &htc_headset_mgr,
+
+        &cable_detect_device,
 };
 
 static struct msm_gpio msm_i2c_gpios_hw[] = {
@@ -3950,6 +3952,7 @@ static void __init primou_init(void)
 	buses_init();
 	if (board_mfg_mode()==1) {
 		pm_led_config[0].out_current = 40;
+
 	}
 
 	device_mid = get_model_id();
@@ -4045,8 +4048,7 @@ static void __init primou_init(void)
 	if (!properties_kobj || rc)
 		pr_err("failed to create board_properties\n");
 
-	//primou_init_keypad();
-	primou_init_gpio_keys();
+	primou_init_keypad();
 #ifdef CONFIG_MDP4_HW_VSYNC
 	primou_te_gpio_config();
 #endif
