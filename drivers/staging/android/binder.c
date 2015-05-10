@@ -23,6 +23,7 @@
 #include <linux/miscdevice.h>
 #include <linux/mm.h>
 #include <linux/module.h>
+#include <linux/rtmutex.h>
 #include <linux/mutex.h>
 #include <linux/nsproxy.h>
 #include <linux/poll.h>
@@ -38,7 +39,7 @@
 
 #include "binder.h"
 
-static DEFINE_MUTEX(binder_lock);
+static DEFINE_RT_MUTEX(binder_lock);
 static DEFINE_MUTEX(binder_deferred_lock);
 static DEFINE_MUTEX(binder_mmap_lock);
 
@@ -1820,7 +1821,8 @@ err_no_context_mgr_node:
 		thread->return_error = return_error;
 }
 
-int binder_thread_write(struct binder_proc *proc, struct binder_thread *thread,
+static int binder_thread_write(struct binder_proc *proc,
+			struct binder_thread *thread,
 			void __user *buffer, int size, signed long *consumed)
 {
 	uint32_t cmd;
@@ -2205,8 +2207,8 @@ int binder_thread_write(struct binder_proc *proc, struct binder_thread *thread,
 	return 0;
 }
 
-void binder_stat_br(struct binder_proc *proc, struct binder_thread *thread,
-		    uint32_t cmd)
+static void binder_stat_br(struct binder_proc *proc,
+			   struct binder_thread *thread, uint32_t cmd)
 {
 	if (_IOC_NR(cmd) < ARRAY_SIZE(binder_stats.br)) {
 		binder_stats.br[_IOC_NR(cmd)]++;
@@ -2271,7 +2273,7 @@ retry:
 	thread->looper |= BINDER_LOOPER_STATE_WAITING;
 	if (wait_for_proc_work)
 		proc->ready_threads++;
-	mutex_unlock(&binder_lock);
+	rt_mutex_unlock(&binder_lock);
 	if (wait_for_proc_work) {
 		if (!(thread->looper & (BINDER_LOOPER_STATE_REGISTERED |
 					BINDER_LOOPER_STATE_ENTERED))) {
@@ -2295,7 +2297,7 @@ retry:
 		} else
 			ret = wait_event_interruptible(thread->wait, binder_has_thread_work(thread));
 	}
-	mutex_lock(&binder_lock);
+	rt_mutex_lock(&binder_lock);
 	if (wait_for_proc_work)
 		proc->ready_threads--;
 	thread->looper &= ~BINDER_LOOPER_STATE_WAITING;
@@ -2663,12 +2665,12 @@ static unsigned int binder_poll(struct file *filp,
 	struct binder_thread *thread = NULL;
 	int wait_for_proc_work;
 
-	mutex_lock(&binder_lock);
+	rt_mutex_lock(&binder_lock);
 	thread = binder_get_thread(proc);
 
 	wait_for_proc_work = thread->transaction_stack == NULL &&
 		list_empty(&thread->todo) && thread->return_error == BR_OK;
-	mutex_unlock(&binder_lock);
+	rt_mutex_unlock(&binder_lock);
 
 	if (wait_for_proc_work) {
 		if (binder_has_proc_work(proc, thread))
@@ -2700,7 +2702,7 @@ static long binder_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 	if (ret)
 		return ret;
 
-	mutex_lock(&binder_lock);
+	rt_mutex_lock(&binder_lock);
 	thread = binder_get_thread(proc);
 	if (thread == NULL) {
 		ret = -ENOMEM;
@@ -2812,7 +2814,7 @@ static long binder_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 err:
 	if (thread)
 		thread->looper &= ~BINDER_LOOPER_STATE_NEED_RETURN;
-	mutex_unlock(&binder_lock);
+	rt_mutex_unlock(&binder_lock);
 	wait_event_interruptible(binder_user_error_wait, binder_stop_on_user_error < 2);
 	if (ret && ret != -ERESTARTSYS)
 		pr_info("binder: %d:%d ioctl %x %lx returned %d\n", proc->pid, current->pid, cmd, arg, ret);
@@ -2842,9 +2844,15 @@ static void binder_vma_close(struct vm_area_struct *vma)
 	binder_defer_work(proc, BINDER_DEFERRED_PUT_FILES);
 }
 
+static int binder_vm_fault(struct vm_area_struct *vma, struct vm_fault *vmf)
+{
+	return VM_FAULT_SIGBUS;
+}
+
 static struct vm_operations_struct binder_vm_ops = {
 	.open = binder_vma_open,
 	.close = binder_vma_close,
+	.fault = binder_vm_fault,
 };
 
 static int binder_mmap(struct file *filp, struct vm_area_struct *vma)
@@ -2984,13 +2992,13 @@ static int binder_open(struct inode *nodp, struct file *filp)
 	INIT_LIST_HEAD(&proc->todo);
 	init_waitqueue_head(&proc->wait);
 	proc->default_priority = task_nice(current);
-	mutex_lock(&binder_lock);
+	rt_mutex_lock(&binder_lock);
 	binder_stats_created(BINDER_STAT_PROC);
 	hlist_add_head(&proc->proc_node, &binder_procs);
 	proc->pid = current->group_leader->pid;
 	INIT_LIST_HEAD(&proc->delivered_death);
 	filp->private_data = proc;
-	mutex_unlock(&binder_lock);
+	rt_mutex_unlock(&binder_lock);
 
 	if (binder_debugfs_dir_entry_proc) {
 		char strbuf[11];
@@ -3188,7 +3196,7 @@ static void binder_deferred_func(struct work_struct *work)
 
 	int defer;
 	do {
-		mutex_lock(&binder_lock);
+		rt_mutex_lock(&binder_lock);
 		mutex_lock(&binder_deferred_lock);
 		if (!hlist_empty(&binder_deferred_list)) {
 			proc = hlist_entry(binder_deferred_list.first,
@@ -3215,7 +3223,7 @@ static void binder_deferred_func(struct work_struct *work)
 		if (defer & BINDER_DEFERRED_RELEASE)
 			binder_deferred_release(proc); /* frees proc */
 
-		mutex_unlock(&binder_lock);
+		rt_mutex_unlock(&binder_lock);
 		if (files)
 			put_files_struct(files);
 	} while (proc);
@@ -3785,7 +3793,7 @@ static int binder_state_show(struct seq_file *m, void *unused)
 	int do_lock = !binder_debug_no_lock;
 
 	if (do_lock)
-		mutex_lock(&binder_lock);
+		rt_mutex_lock(&binder_lock);
 
 	seq_puts(m, "binder state:\n");
 
@@ -3797,7 +3805,7 @@ static int binder_state_show(struct seq_file *m, void *unused)
 	hlist_for_each_entry(proc, pos, &binder_procs, proc_node)
 		print_binder_proc(m, proc, 1);
 	if (do_lock)
-		mutex_unlock(&binder_lock);
+		rt_mutex_unlock(&binder_lock);
 	return 0;
 }
 
@@ -3808,7 +3816,7 @@ static int binder_stats_show(struct seq_file *m, void *unused)
 	int do_lock = !binder_debug_no_lock;
 
 	if (do_lock)
-		mutex_lock(&binder_lock);
+		rt_mutex_lock(&binder_lock);
 
 	seq_puts(m, "binder stats:\n");
 
@@ -3817,7 +3825,7 @@ static int binder_stats_show(struct seq_file *m, void *unused)
 	hlist_for_each_entry(proc, pos, &binder_procs, proc_node)
 		print_binder_proc_stats(m, proc);
 	if (do_lock)
-		mutex_unlock(&binder_lock);
+		rt_mutex_unlock(&binder_lock);
 	return 0;
 }
 
@@ -3828,13 +3836,13 @@ static int binder_transactions_show(struct seq_file *m, void *unused)
 	int do_lock = !binder_debug_no_lock;
 
 	if (do_lock)
-		mutex_lock(&binder_lock);
+		rt_mutex_lock(&binder_lock);
 
 	seq_puts(m, "binder transactions:\n");
 	hlist_for_each_entry(proc, pos, &binder_procs, proc_node)
 		print_binder_proc(m, proc, 0);
 	if (do_lock)
-		mutex_unlock(&binder_lock);
+		rt_mutex_unlock(&binder_lock);
 	return 0;
 }
 
@@ -3844,11 +3852,11 @@ static int binder_proc_show(struct seq_file *m, void *unused)
 	int do_lock = !binder_debug_no_lock;
 
 	if (do_lock)
-		mutex_lock(&binder_lock);
+		rt_mutex_lock(&binder_lock);
 	seq_puts(m, "binder proc state:\n");
 	print_binder_proc(m, proc, 1);
 	if (do_lock)
-		mutex_unlock(&binder_lock);
+		rt_mutex_unlock(&binder_lock);
 	return 0;
 }
 
@@ -4007,7 +4015,7 @@ static int procfs_binder_read_proc_state(char *page, char **start, off_t off,
 		return 0;
 
 	if (do_lock)
-		mutex_lock(&binder_lock);
+		rt_mutex_lock(&binder_lock);
 
 	buf += snprintf(buf, end - buf, "binder state:\n");
 
@@ -4025,7 +4033,7 @@ static int procfs_binder_read_proc_state(char *page, char **start, off_t off,
 		buf = procfs_print_binder_proc(buf, end, proc, 1);
 	}
 	if (do_lock)
-		mutex_unlock(&binder_lock);
+		rt_mutex_unlock(&binder_lock);
 	if (buf > page + PAGE_SIZE)
 		buf = page + PAGE_SIZE;
 
@@ -4053,7 +4061,7 @@ static int procfs_binder_read_proc_stats(char *page, char **start, off_t off,
 		return 0;
 
 	if (do_lock)
-		mutex_lock(&binder_lock);
+		rt_mutex_lock(&binder_lock);
 
 	p += snprintf(p, PAGE_SIZE, "binder stats:\n");
 
@@ -4065,7 +4073,7 @@ static int procfs_binder_read_proc_stats(char *page, char **start, off_t off,
 		p = procfs_print_binder_proc_stats(p, page + PAGE_SIZE, proc);
 	}
 	if (do_lock)
-		mutex_unlock(&binder_lock);
+		rt_mutex_unlock(&binder_lock);
 	if (p > page + PAGE_SIZE)
 		p = page + PAGE_SIZE;
 
@@ -4094,7 +4102,7 @@ static int procfs_binder_read_proc_transactions(char *page, char **start, off_t 
 		return 0;
 
 	if (do_lock)
-		mutex_lock(&binder_lock);
+		rt_mutex_lock(&binder_lock);
 
 	buf += snprintf(buf, end - buf, "binder transactions:\n");
 	hlist_for_each_entry(proc, pos, &binder_procs, proc_node) {
@@ -4103,7 +4111,7 @@ static int procfs_binder_read_proc_transactions(char *page, char **start, off_t 
 		buf = procfs_print_binder_proc(buf, end, proc, 0);
 	}
 	if (do_lock)
-		mutex_unlock(&binder_lock);
+		rt_mutex_unlock(&binder_lock);
 	if (buf > page + PAGE_SIZE)
 		buf = page + PAGE_SIZE;
 
@@ -4130,11 +4138,11 @@ static int procfs_binder_read_proc_proc(char *page, char **start, off_t off,
 		return 0;
 
 	if (do_lock)
-		mutex_lock(&binder_lock);
+		rt_mutex_lock(&binder_lock);
 	p += snprintf(p, PAGE_SIZE, "binder proc state:\n");
 	p = procfs_print_binder_proc(p, page + PAGE_SIZE, proc, 1);
 	if (do_lock)
-		mutex_unlock(&binder_lock);
+		rt_mutex_unlock(&binder_lock);
 
 	if (p > page + PAGE_SIZE)
 		p = page + PAGE_SIZE;
