@@ -43,6 +43,8 @@
 #include <linux/frontswap.h>
 #endif
 
+#define ZCACHE_COMPRESSOR_DEFAULT "lz4"
+
 #if 0
 /* this is more aggressive but may cause other problems? */
 #define ZCACHE_GFP_MASK	(GFP_ATOMIC | __GFP_NORETRY | __GFP_NOWARN)
@@ -1828,7 +1830,7 @@ static int zcache_frontswap_poolid = -1;
  * Swizzling increases objects per swaptype, increasing tmem concurrency
  * for heavy swaploads.  Later, larger nr_cpus -> larger SWIZ_BITS
  * Setting SWIZ_BITS to 27 basically reconstructs the swap entry from
- * frontswap_load(), but has side-effects. Hence using 8.
+ * frontswap_get_page(), but has side-effects. Hence using 8.
  */
 #define SWIZ_BITS		8
 #define SWIZ_MASK		((1 << SWIZ_BITS) - 1)
@@ -1842,7 +1844,7 @@ static inline struct tmem_oid oswiz(unsigned type, u32 ind)
 	return oid;
 }
 
-static int zcache_frontswap_store(unsigned type, pgoff_t offset,
+static int zcache_frontswap_put_page(unsigned type, pgoff_t offset,
 				   struct page *page)
 {
 	u64 ind64 = (u64)offset;
@@ -1863,7 +1865,7 @@ static int zcache_frontswap_store(unsigned type, pgoff_t offset,
 
 /* returns 0 if the page was successfully gotten from frontswap, -1 if
  * was not present (should never happen!) */
-static int zcache_frontswap_load(unsigned type, pgoff_t offset,
+static int zcache_frontswap_get_page(unsigned type, pgoff_t offset,
 				   struct page *page)
 {
 	u64 ind64 = (u64)offset;
@@ -1912,8 +1914,8 @@ static void zcache_frontswap_init(unsigned ignored)
 }
 
 static struct frontswap_ops zcache_frontswap_ops = {
-	.put_page = zcache_frontswap_store,
-	.get_page = zcache_frontswap_load,
+	.put_page = zcache_frontswap_put_page,
+	.get_page = zcache_frontswap_get_page,
 	.invalidate_page = zcache_frontswap_flush_page,
 	.invalidate_area = zcache_frontswap_flush_area,
 	.init = zcache_frontswap_init
@@ -1986,7 +1988,7 @@ static int __init zcache_comp_init(void)
 					zcache_comp_name);
 	}
 	if (!ret)
-		strcpy(zcache_comp_name, "lzo");
+		strcpy(zcache_comp_name, ZCACHE_COMPRESSOR_DEFAULT);
 	ret = crypto_has_comp(zcache_comp_name, 0, 0);
 	if (!ret) {
 		ret = 1;
