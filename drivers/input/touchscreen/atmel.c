@@ -133,10 +133,12 @@ static int s2w_register_threshold = 9; /* beyond this threshold the panel will n
 static int s2w_min_distance = 600; /* power will toggle at this distance from start point */
 static bool s2w_allow_stroke = false; /* use either direction for on/off */
 static bool s2w_switch = false;
+static bool s2w_temp_switch = false;
 /* S2W ends */
 
 /* DT2W starts */
 static bool dt2w_switch = false;
+static bool dt2w_temp_switch = false;
 static unsigned int dt2w_min_duration = 100; /* msecs */
 static unsigned int dt2w_max_duration = 500;  /* msecs */
 static cputime64_t dt2w_start = 0;
@@ -709,11 +711,13 @@ static ssize_t atmel_sweep2wake_store(struct device *dev,
 		return count;
 	}
 	if (scr_suspended) {
-		printk(KERN_INFO "[TP] [sweep2wake]: turn on the screen to toggle s2w\n");
+		s2w_temp_switch = (bool)value;
+		printk(KERN_INFO "[TP] [sweep2wake]: screen is off, set s2w_temp_switch=%d\n", s2w_temp_switch);
 		return count;
 	}
 	if (value == 0 || value == 1) {
 		s2w_switch = (bool)value;
+		s2w_temp_switch = s2w_switch;
 		printk(KERN_INFO "[TP] [sweep2wake]: s2w_switch=%d\n", s2w_switch);
 	} else {
 		printk(KERN_INFO "[TP] [sweep2wake]: set s2w_switch failed - valid values are 0 or 1 - %s\n", buf);
@@ -831,11 +835,13 @@ static ssize_t atmel_dt2w_switch_store(struct device *dev,
 		return count;
 	}
 	if (scr_suspended) {
-		printk(KERN_INFO "[TP] [sweep2wake]: turn on the screen to toggle dt2w\n");
+		dt2w_temp_switch = (bool)value;
+		printk(KERN_INFO "[TP] [sweep2wake]: screen is off, set dt2w_temp_switch=%d\n", dt2w_temp_switch);
 		return count;
 	}
 	if (value == 0 || value == 1) {
 		dt2w_switch = (bool)value;
+		dt2w_temp_switch = dt2w_switch;
 		printk(KERN_INFO "[TP] [sweep2wake]: dt2w_switch=%d\n", dt2w_switch);
 	} else {
 		printk(KERN_INFO "[TP] [sweep2wake]: set dt2w_switch failed - valid values are 0 or 1 - %s\n", buf);
@@ -2962,6 +2968,10 @@ static int atmel_ts_resume(struct i2c_client *client)
 	}
 #endif
 	scr_suspended = false;
+
+	// Set real switches based on temp switches
+	s2w_switch = s2w_temp_switch;
+	dt2w_switch = dt2w_temp_switch;
 
 	if (ts->debug_log_level > 0)
 		printk(KERN_INFO "%s:[TP]done\n", __func__);
