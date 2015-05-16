@@ -266,6 +266,7 @@ static ssize_t synaptics_sweep2wake_store(struct device *dev,
 	}
 	if (value == 0 || value == 1) {
 		s2w_switch = (bool)value;
+		s2w_temp_switch = s2w_switch;
 		printk(KERN_INFO "[TP] [sweep2wake]: s2w_switch=%d\n", s2w_switch);
 	} else {
 		printk(KERN_INFO "[TP] [sweep2wake]: set s2w_switch failed - valid values are 0 or 1 - %s\n", buf);
@@ -389,6 +390,7 @@ static ssize_t synaptics_dt2w_switch_store(struct device *dev,
 	}
 	if (value == 0 || value == 1) {
 		dt2w_switch = (bool)value;
+		dt2w_temp_switch = dt2w_switch;
 		printk(KERN_INFO "[TP] [sweep2wake]: dt2w_switch=%d\n", dt2w_switch);
 	} else {
 		printk(KERN_INFO "[TP] [sweep2wake]: set dt2w_switch failed - valid values are 0 or 1 - %s\n", buf);
