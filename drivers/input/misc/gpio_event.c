@@ -176,7 +176,8 @@ static int gpio_event_probe(struct platform_device *pdev)
 #ifdef CONFIG_MACH_SAGA
 		if (!strcmp(input_dev->name, "saga-keypad")) {
 			sweep2wake_saga_setdev(input_dev);
-#else
+#endif
+#ifdef CONFIG_MACH_SPADE
 		if (!strcmp(input_dev->name, "spade-keypad")) {
 			sweep2wake_atmel_setdev(input_dev);
 #endif
@@ -184,10 +185,18 @@ static int gpio_event_probe(struct platform_device *pdev)
 		}
 #endif
 #ifdef CONFIG_TOUCHSCREEN_SYNAPTICS_SWEEP2WAKE
+#ifdef CONFIG_MACH_SPADE
 		if (!strcmp(input_dev->name, "spade-keypad")) {
 			sweep2wake_syn_setdev(input_dev);
 			printk(KERN_INFO "[sweep2wake]: set device %s\n", input_dev->name);
 		}
+#endif
+#ifdef CONFIG_MACH_PRIMOU
+		if (!strcmp(input_dev->name, "primou-keypad")) {
+			sweep2wake_syn_setdev(input_dev);
+			printk(KERN_INFO "[sweep2wake]: set device %s\n", input_dev->name);
+		}
+#endif
 #endif
 	}
 	ip->input_devs->count = dev_count;
