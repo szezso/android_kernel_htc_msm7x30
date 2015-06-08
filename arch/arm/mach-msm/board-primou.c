@@ -51,7 +51,11 @@
 #include <mach/camera-7x30.h>
 #include <mach/memory.h>
 #include <mach/msm_iomap.h>
+#ifdef CONFIG_USB_MSM_OTG_72K
+#include <mach/msm_hsusb.h>
+#else
 #include <linux/usb/msm_hsusb.h>
+#endif
 #include <mach/msm_spi.h>
 #include <mach/qdsp5v2/msm_lpa.h>
 #include <mach/dma.h>
@@ -2627,12 +2631,19 @@ static void __init msm_qsd_spi_init(void)
 }
 
 static int phy_init_seq[] = { 0x06, 0x36, 0x0C, 0x31, 0x31, 0x32, 0x1, 0x0D, 0x1, 0x10, -1 };
-static struct msm_otg_platform_data msm_otg_pdata = {
+static struct msm_hsusb_gadget_platform_data msm_gadget_pdata = {
 	.phy_init_seq		= phy_init_seq,
-	.mode			= USB_OTG,
-	.otg_control		= OTG_PMIC_CONTROL,
-	.power_budget		= 750,
-	.phy_type = CI_45NM_INTEGRATED_PHY,
+	.is_phy_status_timer_on = 1,
+};
+
+static struct msm_otg_platform_data msm_otg_pdata = {
+#ifdef CONFIG_USB_EHCI_MSM_72K
+	.vbus_power = msm_hsusb_vbus_power,
+#endif
+	.pemp_level		= PRE_EMPHASIS_WITH_20_PERCENT,
+	.cdr_autoreset		= CDR_AUTO_RESET_DISABLE,
+	.drv_ampl		= HS_DRV_AMPLITUDE_DEFAULT,
+	.se1_gating		= SE1_GATING_DISABLE,
 };
 
 static struct resource msm_fb_resources[] = {
@@ -3821,9 +3832,6 @@ void primou_add_usb_devices(void)
 	msm_device_gadget_peripheral.dev.parent = &msm_device_otg.dev;
 	platform_device_register(&msm_device_gadget_peripheral);
 	platform_device_register(&android_usb_device);
-
-        msm_device_hsusb_host.dev.parent = &msm_device_otg.dev;
-	platform_device_register(&msm_device_hsusb_host);
 }
 
 static int __init board_serialno_setup(char *serialno)
@@ -3938,7 +3946,15 @@ static void __init primou_init(void)
 	msm_device_uart_dm1.dev.platform_data = &msm_uart_dm1_pdata;
 #endif
 
+#ifdef CONFIG_USB_MSM_OTG_72K
 	msm_device_otg.dev.platform_data = &msm_otg_pdata;
+#ifdef CONFIG_USB_GADGET
+	msm_otg_pdata.swfi_latency =
+	msm_pm_data
+	[MSM_PM_SLEEP_MODE_RAMP_DOWN_AND_WAIT_FOR_INTERRUPT].latency;
+	msm_device_gadget_peripheral.dev.platform_data = &msm_gadget_pdata;
+#endif
+#endif
 
 #if defined(CONFIG_TSIF) || defined(CONFIG_TSIF_MODULE)
 	msm_device_tsif.dev.platform_data = &tsif_platform_data;
