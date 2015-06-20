@@ -5730,50 +5730,52 @@ early_param("pmem_adsp_size", pmem_adsp_size_setup);
 #ifdef CONFIG_ION_MSM
 #ifdef CONFIG_MSM_MULTIMEDIA_USE_ION
 static struct ion_co_heap_pdata co_ion_pdata = {
-  	.adjacent_mem_id = INVALID_HEAP_ID,
-  	.align = PAGE_SIZE,
+	.adjacent_mem_id = INVALID_HEAP_ID,
+	.align = PAGE_SIZE,
 };
 #endif
 
-/**
+/*
  * These heaps are listed in the order they will be allocated.
  * Don't swap the order unless you know what you are doing!
  */
-static struct ion_platform_data ion_pdata = {
-  .nr = MSM_ION_HEAP_NUM,
-  .heaps = {
-    {
-      	.id  = ION_SYSTEM_HEAP_ID,
-      	.type  = ION_HEAP_TYPE_SYSTEM,
-      	.name  = ION_VMALLOC_HEAP_NAME,
-    },
+
+struct ion_platform_heap msm7x30_heaps[] = {
+		{
+			.id		= ION_SYSTEM_HEAP_ID,
+			.type	= ION_HEAP_TYPE_SYSTEM,
+			.name	= ION_VMALLOC_HEAP_NAME,
+		},
 #ifdef CONFIG_MSM_MULTIMEDIA_USE_ION
-    /* CAMERA */
-    {
-      	.id    = ION_CAMERA_HEAP_ID,
-      	.type  = ION_HEAP_TYPE_CARVEOUT,
-      	.name  = ION_CAMERA_HEAP_NAME,
-      	.memory_type = ION_EBI_TYPE,
-      	.has_outer_cache = 1,
-      	.extra_data = (void *)&co_ion_pdata,
-    },
-    /* PMEM_MDP = SF */
-    {
-      	.id  = ION_SF_HEAP_ID,
-      	.type  = ION_HEAP_TYPE_CARVEOUT,
-      	.name  = ION_SF_HEAP_NAME,
-      	.memory_type = ION_EBI_TYPE,
-      	.has_outer_cache = 1,
-      	.extra_data = (void *)&co_ion_pdata,
-    },
+		/* CAMERA */
+		{
+			.id		= ION_CAMERA_HEAP_ID,
+			.type	= ION_HEAP_TYPE_CARVEOUT,
+			.name	= ION_CAMERA_HEAP_NAME,
+			.memory_type = ION_EBI_TYPE,
+			.extra_data = (void *)&co_ion_pdata,
+		},
+		/* PMEM_MDP =SF */
+		{
+			.id		= ION_SF_HEAP_ID,
+			.type	= ION_HEAP_TYPE_CARVEOUT,
+			.name	= ION_SF_HEAP_NAME,
+			.memory_type = ION_EBI_TYPE,
+			.extra_data = (void *)&co_ion_pdata,
+		},
 #endif
-  }
+
+};
+
+static struct ion_platform_data ion_pdata = {
+	.nr = MSM_ION_HEAP_NUM,
+	.heaps = msm7x30_heaps,
 };
 
 static struct platform_device ion_dev = {
-  	.name = "ion-msm",
-  	.id = 1,
-  	.dev = { .platform_data = &ion_pdata },
+	.name = "ion-msm",
+	.id = 1,
+	.dev = { .platform_data = &ion_pdata },
 };
 #endif
 
