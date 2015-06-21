@@ -37,8 +37,7 @@
 #define MSM_PMEM_SF_BASE		0x2DC00000
 #define MSM_PMEM_SF_SIZE		0x01F00000
 
-#define MSM_FB_SIZE			0x00500000
-#define MSM_FB_BASE                     0x2FB00000
+#define MSM_FB_SIZE    roundup((800 * ALIGN(480, 32) * 4 * 3), 4096) /* 4 bpp x 3 pages, Note: must be multiple of 4096 */
 
 #define MSM_ION_CAMERA_SIZE		MSM_PMEM_ADSP_SIZE
 #define MSM_ION_SF_BASE			MSM_PMEM_SF_BASE

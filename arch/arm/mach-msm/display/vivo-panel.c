@@ -23,6 +23,7 @@
 #include <linux/clk.h>
 #include <linux/err.h>
 #include <linux/gpio.h>
+#include <linux/workqueue.h>
 
 #include <mach/msm_panel.h>
 #include <asm/io.h>
