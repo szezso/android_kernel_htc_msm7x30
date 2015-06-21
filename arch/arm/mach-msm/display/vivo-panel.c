@@ -121,8 +121,6 @@ static struct mddi_cmd hitachi_renesas_backlight_cmd[] = {
 
 enum led_brightness vivow_brightness_value = DEFAULT_BRIGHTNESS;// multiple definition of `brightness_value' in board-glacier-panel.c
 
-extern unsigned long msm_fb_base;
-
 static void
 do_renesas_cmd(struct msm_mddi_client_data *client_data, struct mddi_cmd *cmd_table, ssize_t size)
 {
@@ -134,6 +132,8 @@ do_renesas_cmd(struct msm_mddi_client_data *client_data, struct mddi_cmd *cmd_ta
 			msleep(pcmd->delay);
 	}
 }
+
+extern unsigned long msm_fb_base;
 
 static int vivow_shrink_pwm(int brightness)
 {

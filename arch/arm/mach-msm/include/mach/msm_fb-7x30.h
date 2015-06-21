@@ -38,6 +38,8 @@ struct mdp_device;
 #define MSM_MDP_DMA_PACK_ALIGN_LSB		(1 << 4)
 #define MSM_MDP_RGB_PANEL_SELE_REFRESH		(1 << 5)
 #define MSM_MDP_ABL_ENABLE			(1 << 6)
+#define MSM_MDP_FORCE_UPDATE      		(1 << 7)
+#define MSM_MDP_PANEL_ROT_180			MSM_MDP_PANEL_FLIP_UD | MSM_MDP_PANEL_FLIP_LR
 
 /* mddi type */
 #define MSM_MDP_MDDI_TYPE_I	 0
@@ -221,6 +223,7 @@ struct msm_lcdc_panel_ops {
 	int	(*init)(struct msm_lcdc_panel_ops *);
 	int	(*uninit)(struct msm_lcdc_panel_ops *);
 	int	(*blank)(struct msm_lcdc_panel_ops *);
+	int	(*mdp_color_enhance)(void);
 	int	(*unblank)(struct msm_lcdc_panel_ops *);
 	int	(*shutdown)(struct msm_lcdc_panel_ops *);
 #ifdef CONFIG_PANEL_SELF_REFRESH
@@ -375,10 +378,6 @@ struct msmfb_info {
 
 	struct early_suspend earlier_suspend;
 	struct early_suspend early_suspend;
-#ifdef CONFIG_HTC_ONMODE_CHARGING
-	struct early_suspend onchg_earlier_suspend;
-	struct early_suspend onchg_suspend;
-#endif
 	struct wake_lock idle_lock;
 	spinlock_t update_lock;
 	struct mutex panel_init_lock;
@@ -430,7 +429,4 @@ extern struct completion mdp_hist_comp;
 #endif
 #endif
 
-int device_fb_detect_panel(const char *name);
-
 #endif /* _MSM_FB_7X30_H_ */
-
