@@ -133,8 +133,6 @@ do_renesas_cmd(struct msm_mddi_client_data *client_data, struct mddi_cmd *cmd_ta
 	}
 }
 
-extern unsigned long msm_fb_base;
-
 static int vivow_shrink_pwm(int brightness)
 {
 	int level;
@@ -349,8 +347,10 @@ err_register_lcd_bl:
 
 /* ------------------------------------------------------------------- */
 
-static struct resource resources_msm_fb[] = {
-	{
+ static struct resource resources_msm_fb[] = {
+ 	{
+		.start = MSM_FB_BASE,
+		.end = MSM_FB_BASE + MSM_FB_SIZE - 1,
 		.flags = IORESOURCE_MEM,
 	},
 };
