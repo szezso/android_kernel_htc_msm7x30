@@ -144,6 +144,7 @@ static struct z180_device device_2d0 = {
 			.config = Z180_MMU_CONFIG,
 		},
 		.pwrctrl = {
+			.regulator_name = "fs_gfx2d0",
 			.irq_name = KGSL_2D0_IRQ,
 		},
 		.iomemname = KGSL_2D0_REG_MEMORY,
@@ -171,6 +172,7 @@ static struct z180_device device_2d1 = {
 			.config = Z180_MMU_CONFIG,
 		},
 		.pwrctrl = {
+			.regulator_name = "fs_gfx2d1",
 			.irq_name = KGSL_2D1_IRQ,
 		},
 		.iomemname = KGSL_2D1_REG_MEMORY,
@@ -811,9 +813,9 @@ static int z180_waittimestamp(struct kgsl_device *device,
 {
 	int status = -EINVAL;
 
-	/* Don't wait forever, set a max of Z180_IDLE_TIMEOUT */
+	/* Don't wait forever, set a max (10 sec) value for now */
 	if (msecs == -1)
-		msecs = Z180_IDLE_TIMEOUT;
+		msecs = 10 * MSEC_PER_SEC;
 
 	mutex_unlock(&device->mutex);
 	status = z180_wait(device, context, timestamp, msecs);
