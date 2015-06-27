@@ -24,10 +24,9 @@
 #include "kgsl_pwrscale.h"
 #include <linux/sync.h>
 
-#define KGSL_TIMEOUT_NONE           0
-#define KGSL_TIMEOUT_DEFAULT        0xFFFFFFFF
-#define KGSL_TIMEOUT_PART           50 /* 50 msec */
-#define KGSL_TIMEOUT_LONG_IB_DETECTION  2000 /* 2 sec*/
+#define KGSL_TIMEOUT_NONE       0
+#define KGSL_TIMEOUT_DEFAULT    0xFFFFFFFF
+#define KGSL_TIMEOUT_PART       50 /* 50 msec */
 
 #define FIRST_TIMEOUT (HZ / 2)
 
@@ -47,7 +46,7 @@
 #define KGSL_STATE_SLEEP	0x00000008
 #define KGSL_STATE_SUSPEND	0x00000010
 #define KGSL_STATE_HUNG		0x00000020
-#define KGSL_STATE_DUMP_AND_FT	0x00000040
+#define KGSL_STATE_DUMP_AND_RECOVER	0x00000040
 #define KGSL_STATE_SLUMBER	0x00000080
 
 #define KGSL_GRAPHICS_MEMORY_LOW_WATERMARK  0x1000000
@@ -171,7 +170,7 @@ struct kgsl_device {
 	wait_queue_head_t wait_queue;
 	struct workqueue_struct *work_queue;
 	struct device *parentdev;
-	struct completion ft_gate;
+	struct completion recovery_gate;
 	struct dentry *d_debugfs;
 	struct idr context_idr;
 	struct early_suspend display_off;
@@ -197,8 +196,6 @@ struct kgsl_device {
 	int drv_log;
 	int mem_log;
 	int pwr_log;
-	int ft_log;
-	int pm_dump_enable;
 	struct kgsl_pwrscale pwrscale;
 	struct kobject pwrscale_kobj;
 	struct pm_qos_request_list pm_qos_req_dma;
@@ -218,7 +215,7 @@ void kgsl_check_fences(struct work_struct *work);
 #define KGSL_DEVICE_COMMON_INIT(_dev) \
 	.hwaccess_gate = COMPLETION_INITIALIZER((_dev).hwaccess_gate),\
 	.suspend_gate = COMPLETION_INITIALIZER((_dev).suspend_gate),\
-	.ft_gate = COMPLETION_INITIALIZER((_dev).ft_gate),\
+	.recovery_gate = COMPLETION_INITIALIZER((_dev).recovery_gate),\
 	.ts_notifier_list = ATOMIC_NOTIFIER_INIT((_dev).ts_notifier_list),\
 	.idle_check_ws = __WORK_INITIALIZER((_dev).idle_check_ws,\
 			kgsl_idle_check),\
@@ -261,31 +258,10 @@ struct kgsl_context {
 	struct list_head events_list;
 };
 
-/**
- * struct kgsl_process_private -  Private structure for a KGSL process (across
- * all devices)
- * @priv: Internal flags, use KGSL_PROCESS_* values
- * @pid: ID for the task owner of the process
- * @mem_lock: Spinlock to protect the process memory lists
- * @refcount: kref object for reference counting the process
- * @process_private_mutex: Mutex to synchronize access to the process struct
- * @mem_rb: RB tree node for the memory owned by this process
- * @idr: Iterator for assigning IDs to memory allocations
- * @pagetable: Pointer to the pagetable owned by this process
- * @kobj: Pointer to a kobj for the sysfs directory for this process
- * @debug_root: Pointer to the debugfs root for this process
- * @stats: Memory allocation statistics for this process
- */
 struct kgsl_process_private {
-	unsigned long priv;
+	unsigned int refcnt;
 	pid_t pid;
 	spinlock_t mem_lock;
-
-	/* General refcount for process private struct obj */
-	struct kref refcount;
-	/* Mutex to synchronize access to each process_private struct obj */
-	struct mutex process_private_mutex;
-
 	struct rb_root mem_rb;
 	struct kgsl_pagetable *pagetable;
 	struct list_head list;
@@ -296,14 +272,6 @@ struct kgsl_process_private {
 		unsigned int cur;
 		unsigned int max;
 	} stats[KGSL_MEM_ENTRY_MAX];
-};
-
-/**
- * enum kgsl_process_priv_flags - Private flags for kgsl_process_private
- * @KGSL_PROCESS_INIT: Set if the process structure has been set up
- */
-enum kgsl_process_priv_flags {
-	KGSL_PROCESS_INIT = 0,
 };
 
 struct kgsl_device_private {
