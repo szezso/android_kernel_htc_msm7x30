@@ -2543,8 +2543,8 @@ static int mdp4_overlay_req2pipe(struct mdp_overlay *req, int mixer,
 		int xres;
 		int yres;
 
-		xres = mfd->var_xres;
-		yres = mfd->var_yres;
+		xres = mfd->panel_info.xres;
+		yres = mfd->panel_info.yres;
 
 		if (((req->dst_rect.x + req->dst_rect.w) > xres) ||
 			((req->dst_rect.y + req->dst_rect.h) > yres)) {
