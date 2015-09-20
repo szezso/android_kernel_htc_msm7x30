@@ -1452,7 +1452,7 @@ static struct rcg_clk sdc4_clk = {
 };
 
 static struct clk_freq_tbl clk_tbl_mdp_core[] = {
-	F_BASIC( 24576000, lpxo,  1),
+	//F_BASIC( 24576000, lpxo,  1),
 	F_BASIC( 46080000, pll3, 16),
 	F_BASIC( 49152000, pll3, 15),
 	F_BASIC( 52663000, pll3, 14),
