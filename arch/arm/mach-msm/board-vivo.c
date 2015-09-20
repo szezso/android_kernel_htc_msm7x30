@@ -1504,12 +1504,11 @@ static int Vivo_s5k6aafx_vreg_off(void)
 }
 #endif
 
-static int config_camera_on_gpios(void)
+static void config_camera_on_gpios(void)
 {
 	pr_info("[CAM] config_camera_on_gpios\n");
 	config_gpio_table(camera_on_gpio_table,
 		ARRAY_SIZE(camera_on_gpio_table));
-	return 0;
 }
 
 static void config_camera_off_gpios(void)
@@ -5821,11 +5820,13 @@ static void __init size_pmem_devices(void)
 }
 
 #ifdef CONFIG_ANDROID_PMEM
+#if 0
 static void __init reserve_memory_for(struct android_pmem_platform_data *p)
 {
 	pr_info("%s: reserve %lu bytes from memory %d for %s.\n", __func__, p->size, p->memory_type, p->name);
 	msm7x30_reserve_table[p->memory_type].size += p->size;
 }
+#endif
 #endif
 
 static void __init reserve_pmem_memory(void)
