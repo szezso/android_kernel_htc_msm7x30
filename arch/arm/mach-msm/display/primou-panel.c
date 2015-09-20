@@ -354,7 +354,7 @@ struct nov_regs {
 
 struct nov_regs pro_lgd_init_seq[] = {
 	{0x1100, 0x00},
-	{REG_WAIT, 20},
+	{REG_WAIT, 10},
 	{0xf000, 0x55},
 	{0xf001, 0xaa},
 	{0xf002, 0x52},
@@ -800,7 +800,7 @@ struct nov_regs pro_lgd_init_seq[] = {
 	{0x5500, 0x03},
 	{0x5E00, 0x06},
 	{0x3500, 0x00},
-	{REG_WAIT, 160},
+	{REG_WAIT, 5},
 	{0x2900, 0x00},
 };
 
@@ -943,7 +943,7 @@ primou_panel_blank(struct msm_mddi_bridge_platform_data *bridge_data,
 		client_data->remote_write(client_data, 0x0, 0x5300);
 		primou_backlight_switch(LED_OFF);
 		client_data->remote_write(client_data, 0, 0x2800);
-		msleep(10);
+		msleep(5);
 		client_data->remote_write(client_data, 0, 0x1000);
 	}
 	client_data->auto_hibernate(client_data, 1);
@@ -957,7 +957,7 @@ primou_panel_unblank(struct msm_mddi_bridge_platform_data *bridge_data,
 	PR_DISP_DEBUG("%s\n", __func__);
 	client_data->auto_hibernate(client_data, 0);
 	/* HTC, Add 50 ms delay for stability of driver IC at high temperature */
-	msleep(50);
+	/* msleep(50); */
 	if (panel_type == PANEL_ID_PRIMO_SONY) {
 		client_data->remote_write(client_data, 0x00, 0x3600);
 		client_data->remote_write(client_data, 0x24, 0x5300);
@@ -1012,11 +1012,6 @@ mddi_power(struct msm_mddi_client_data *client_data, int on)
 			msleep(5);
 
 			gpio_set_value(PRIMOU_LCD_RSTz, 1);
-			msleep(1);
-			gpio_set_value(PRIMOU_LCD_RSTz, 0);
-			msleep(1);
-			gpio_set_value(PRIMOU_LCD_RSTz, 1);
-			msleep(15);
 		} else {
 			config = PCOM_GPIO_CFG(PRIMOU_LCD_ID1, 0, GPIO_OUTPUT, GPIO_PULL_UP, GPIO_2MA);
 			rc = msm_proc_comm(PCOM_RPC_GPIO_TLMM_CONFIG_EX, &config, 0);
@@ -1026,25 +1021,12 @@ mddi_power(struct msm_mddi_client_data *client_data, int on)
 			msleep(5);
 
 			gpio_set_value(PRIMOU_LCD_RSTz, 1);
-			msleep(1);
-			gpio_set_value(PRIMOU_LCD_RSTz, 0);
-			msleep(1);
-			gpio_set_value(PRIMOU_LCD_RSTz, 1);
-			msleep(20);
 		}
 	} else {
-		if (panel_type == PANEL_ID_PRIMO_SONY) {
-			msleep(80);
-			gpio_set_value(PRIMOU_LCD_RSTz, 0);
-			msleep(10);
-			vreg_disable(V_LCMIO_1V8);
-			vreg_disable(V_LCMIO_2V8);
-		} else {
-			msleep(20);
-			gpio_set_value(PRIMOU_LCD_RSTz, 0);
-			vreg_disable(V_LCMIO_2V8);
-			vreg_disable(V_LCMIO_1V8);
-		}
+		msleep(5);
+		gpio_set_value(PRIMOU_LCD_RSTz, 0);
+		vreg_disable(V_LCMIO_2V8);
+		vreg_disable(V_LCMIO_1V8);
 
 		config = PCOM_GPIO_CFG(PRIMOU_MDDI_TE, 0, GPIO_OUTPUT, GPIO_PULL_DOWN, GPIO_2MA);
 		rc = msm_proc_comm(PCOM_RPC_GPIO_TLMM_CONFIG_EX, &config, 0);
@@ -1116,6 +1098,18 @@ int __init primou_init_panel(void)
 	int rc;
 
 	PR_DISP_INFO("%s: enter.\n", __func__);
+
+	switch (panel_type) {
+	case PANEL_ID_PRIMO_SONY:
+		PR_DISP_INFO("%s: Using sony panel.\n", __func__);
+		break;
+	case PANEL_ID_PRIMO_LG:
+		PR_DISP_INFO("%s: Using lg panel.\n", __func__);
+		break;
+	default:
+		PR_DISP_INFO("%s: Using some other panel.\n", __func__);
+		break;
+	}
 
 	/* lcd panel power */
 	V_LCMIO_1V8 = vreg_get(NULL, "wlan2");
