@@ -133,6 +133,8 @@ do_renesas_cmd(struct msm_mddi_client_data *client_data, struct mddi_cmd *cmd_ta
 	}
 }
 
+extern unsigned long msm_fb_base;
+
 static int vivow_shrink_pwm(int brightness)
 {
 	int level;
@@ -347,10 +349,8 @@ err_register_lcd_bl:
 
 /* ------------------------------------------------------------------- */
 
- static struct resource resources_msm_fb[] = {
- 	{
-		.start = MSM_FB_BASE,
-		.end = MSM_FB_BASE + MSM_FB_SIZE - 1,
+static struct resource resources_msm_fb[] = {
+	{
 		.flags = IORESOURCE_MEM,
 	},
 };
@@ -882,6 +882,10 @@ int __init vivo_init_panel(void)
 		       __func__, PTR_ERR(V_LCMIO_1V8));
 		return -1;
 	}
+
+
+	resources_msm_fb[0].start = msm_fb_base;
+	resources_msm_fb[0].end = msm_fb_base + MSM_FB_SIZE - 1;
 
 	return 0;
 }
