@@ -853,6 +853,9 @@ int __init vivo_init_panel(void)
 		return PTR_ERR(axi_clk);
 	}
 
+	resources_msm_fb[0].start = msm_fb_base;
+	resources_msm_fb[0].end = msm_fb_base + MSM_FB_SIZE - 1;
+
 	msm_device_mddi0.dev.platform_data = &mddi_pdata;
 	rc = platform_device_register(&msm_device_mddi0);
 	if (rc)
@@ -882,10 +885,6 @@ int __init vivo_init_panel(void)
 		       __func__, PTR_ERR(V_LCMIO_1V8));
 		return -1;
 	}
-
-
-	resources_msm_fb[0].start = msm_fb_base;
-	resources_msm_fb[0].end = msm_fb_base + MSM_FB_SIZE - 1;
 
 	return 0;
 }
