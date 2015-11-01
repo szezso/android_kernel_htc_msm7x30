@@ -1504,14 +1504,14 @@ static int Vivo_s5k6aafx_vreg_off(void)
 }
 #endif
 
-static void config_camera_on_gpios(void)
+static void config_vivo_camera_on_gpios(void)
 {
 	pr_info("[CAM] config_camera_on_gpios\n");
 	config_gpio_table(camera_on_gpio_table,
 		ARRAY_SIZE(camera_on_gpio_table));
 }
 
-static void config_camera_off_gpios(void)
+static void config_vivo_camera_off_gpios(void)
 {
 	pr_info("[CAM] config_camera_off_gpios\n");
 	config_gpio_table(camera_off_gpio_table,
@@ -1531,9 +1531,9 @@ struct resource msm_camera_resources[] = {
 	},
 };
 
-struct msm_camera_device_platform_data camera_device_data = {
-  .camera_gpio_on  = config_camera_on_gpios,
-  .camera_gpio_off = config_camera_off_gpios,
+static struct msm_camera_device_platform_data camera_device_data = {
+  .camera_gpio_on  = config_vivo_camera_on_gpios,
+  .camera_gpio_off = config_vivo_camera_off_gpios,
   .ioext.mdcphy = MSM_MDC_PHYS,
   .ioext.mdcsz  = MSM_MDC_SIZE,
   .ioext.appphy = MSM_CLK_CTL_PHYS,
@@ -1584,7 +1584,7 @@ static void Vivo_seccam_clk_switch(void){
 static struct camera_flash_cfg msm_camera_sensor_flash_cfg = {
 	.camera_flash = flashlight_control,
 	.num_flash_levels = FLASHLIGHT_NUM,
-	.low_temp_limit = 10,
+	.low_temp_limit = 5,
 	.low_cap_limit = 15,
 };
 
