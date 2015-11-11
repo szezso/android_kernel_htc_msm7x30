@@ -20,6 +20,7 @@
 int vivo_wifi_power(int on);
 int vivo_wifi_reset(int on);
 int vivo_wifi_set_carddetect(int on);
+int vivo_wifi_get_mac_addr(unsigned char *buf);
 
 #define PREALLOC_WLAN_NUMBER_OF_SECTIONS	4
 #define PREALLOC_WLAN_NUMBER_OF_BUFFERS		160
@@ -31,6 +32,8 @@ int vivo_wifi_set_carddetect(int on);
 #define WLAN_SECTION_SIZE_3	(PREALLOC_WLAN_NUMBER_OF_BUFFERS * 1024)
 
 #define WLAN_SKB_BUF_NUM	16
+
+/*#define HW_OOB 1*/
 
 static struct sk_buff *wlan_static_skb[WLAN_SKB_BUF_NUM];
 
@@ -129,11 +132,68 @@ static unsigned vivo_wifi_update_nvs(char *str)
 	if (ptr[NVS_DATA_OFFSET + len -1] == 0)
 		len -= 1;
 
+	if (ptr[NVS_DATA_OFFSET + len - 1] != '\n') {
+		len += 1;
+		ptr[NVS_DATA_OFFSET + len - 1] = '\n';
+	}
+
 	strcpy(ptr + NVS_DATA_OFFSET + len, str);
 	len += strlen(str);
 	memcpy(ptr + NVS_LEN_OFFSET, &len, sizeof(len));
 	return 0;
 }
+
+#ifdef HW_OOB
+static unsigned strip_nvs_param(char *param)
+{
+	unsigned char *nvs_data;
+
+	unsigned param_len;
+	int start_idx, end_idx;
+
+	unsigned char *ptr;
+	unsigned len;
+
+	if (!param)
+		return -EINVAL;
+	ptr = get_wifi_nvs_ram();
+	/* Size in format LE assumed */
+	memcpy(&len, ptr + NVS_LEN_OFFSET, sizeof(len));
+
+	/* the last bye in NVRAM is 0, trim it */
+	if (ptr[NVS_DATA_OFFSET + len - 1] == 0)
+		len -= 1;
+
+	nvs_data = ptr + NVS_DATA_OFFSET;
+
+	param_len = strlen(param);
+
+	/* search param */
+	for (start_idx = 0; start_idx < len - param_len; start_idx++) {
+		if (memcmp(&nvs_data[start_idx], param, param_len) == 0)
+			break;
+	}
+
+	end_idx = 0;
+	if (start_idx < len - param_len) {
+		/* search end-of-line */
+		for (end_idx = start_idx + param_len; end_idx < len; end_idx++) {
+			if (nvs_data[end_idx] == '\n' || nvs_data[end_idx] == 0)
+				break;
+		}
+	}
+
+	if (start_idx < end_idx) {
+		/* move the remain data forward */
+		for (; end_idx + 1 < len; start_idx++, end_idx++)
+			nvs_data[start_idx] = nvs_data[end_idx+1];
+
+		len = len - (end_idx - start_idx + 1);
+		memcpy(ptr + NVS_LEN_OFFSET, &len, sizeof(len));
+	}
+	return 0;
+}
+#endif
 
 #ifndef CONFIG_BCMDHD_GOOGLE
 #define WIFI_MAC_PARAM_STR     "macaddr="
@@ -212,7 +272,11 @@ int __init vivo_wifi_init(void)
 	int ret;
 
 	printk(KERN_INFO "%s: start\n", __func__);
+#ifdef HW_OOB
+	strip_nvs_param("sd_oobonly");
+#else
 	vivo_wifi_update_nvs("sd_oobonly=1\n");
+#endif
 	vivo_wifi_update_nvs("btc_params80=0\n");
 	vivo_wifi_update_nvs("btc_params6=30\n");
 	vivo_init_wifi_mem();
