@@ -22,7 +22,7 @@
 #define PM8058_GPIO_SYS_TO_PM(sys_gpio)    (sys_gpio - NR_GPIO_IRQS)
 
 #define MSM_LINUX_BASE1			0x04400000
-#define MSM_LINUX_SIZE1			0x1BC00000
+#define MSM_LINUX_SIZE1			0x1C000000
 #define MSM_LINUX_BASE2			0x20000000
 #define MSM_LINUX_SIZE2			0x0C300000
 
@@ -30,7 +30,7 @@
 #define MSM_RAM_CONSOLE_SIZE		0x00100000
 
 #define MSM_PMEM_ADSP_BASE		0x2BE00000
-#define MSM_PMEM_ADSP_SIZE		0x01F00000 /* for 8M(4:3) + gpu effect */
+#define MSM_PMEM_ADSP_SIZE		0x01E00000 /* for 8M(4:3) + gpu effect */
 
 #define PMEM_KERNEL_EBI0_SIZE   	0x00500000       /* 7MB -> 9MB*/
 

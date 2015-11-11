@@ -119,7 +119,9 @@
 #ifdef CONFIG_BT
 #include <mach/htc_bdaddress.h>
 #endif
+#ifdef CONFIG_ION_MSM
 #include <linux/msm_ion.h>
+#endif
 
 int htc_get_usb_accessory_adc_level(uint32_t *buffer);
 
@@ -1531,7 +1533,7 @@ struct resource msm_camera_resources[] = {
 	},
 };
 
-static struct msm_camera_device_platform_data camera_device_data = {
+static struct msm_camera_device_platform_data msm_camera_device_data = {
   .camera_gpio_on  = config_vivo_camera_on_gpios,
   .camera_gpio_off = config_vivo_camera_off_gpios,
   .ioext.mdcphy = MSM_MDC_PHYS,
@@ -1596,7 +1598,7 @@ static struct msm_camera_sensor_info msm_camera_sensor_s5k3h1gx_data = {
   .camera_power_on = Vivo_s5k3h1gx_vreg_on,
   .camera_power_off = Vivo_s5k3h1gx_vreg_off,
   .camera_clk_switch = Vivo_maincam_clk_switch,
-  .pdata = &camera_device_data,
+  .pdata = &msm_camera_device_data,
   .flash_type = MSM_CAMERA_FLASH_LED,
   .resource = msm_camera_resources,
   .num_resources = ARRAY_SIZE(msm_camera_resources),
@@ -1625,7 +1627,7 @@ static struct msm_camera_sensor_info msm_camera_sensor_s5k6aafx_data = {
 	.camera_power_on = Vivo_s5k6aafx_vreg_on,
 	.camera_power_off = Vivo_s5k6aafx_vreg_off,
 	.camera_clk_switch = Vivo_seccam_clk_switch,
-	.pdata = &camera_device_data,
+	.pdata = &msm_camera_device_data,
 	.flash_type = MSM_CAMERA_FLASH_LED,
 	.resource = msm_camera_resources,
 	.num_resources = ARRAY_SIZE(msm_camera_resources),
@@ -3542,14 +3544,6 @@ static struct android_pmem_platform_data android_pmem_adsp_pdata = {
 	.memory_type = MEMTYPE_EBI0,
 };
 
-#if 0
-static struct android_pmem_platform_data android_pmem_audio_pdata = {
-       .name = "pmem_audio",
-       .allocator_type = PMEM_ALLOCATORTYPE_BITMAP,
-       .cached = 0,
-	.memory_type = MEMTYPE_EBI0,
-};
-#endif
 static struct platform_device android_pmem_adsp_device = {
        .name = "android_pmem",
        .id = 2,
@@ -3557,12 +3551,20 @@ static struct platform_device android_pmem_adsp_device = {
 };
 
 #if 0
+static struct android_pmem_platform_data android_pmem_audio_pdata = {
+       .name = "pmem_audio",
+       .allocator_type = PMEM_ALLOCATORTYPE_BITMAP,
+       .cached = 0,
+	.memory_type = MEMTYPE_EBI0,
+};
+
 static struct platform_device android_pmem_audio_device = {
        .name = "android_pmem",
        .id = 4,
        .dev = { .platform_data = &android_pmem_audio_pdata },
 };
 #endif
+
 #if defined(CONFIG_CRYPTO_DEV_QCRYPTO) || \
 		defined(CONFIG_CRYPTO_DEV_QCRYPTO_MODULE) || \
 		defined(CONFIG_CRYPTO_DEV_QCEDEV) || \
@@ -4102,6 +4104,9 @@ static struct platform_device *devices[] __initdata = {
 	&msm_device_ssbi7,
 #endif
 	&android_pmem_device,
+#ifdef CONFIG_MSM_V4L2_VIDEO_OVERLAY_DEVICE
+        &msm_v4l2_video_overlay_device,
+#endif
 	&msm_migrate_pages_device,
 #ifdef CONFIG_MSM_ROTATOR
 	&msm_rotator_device,
@@ -4111,7 +4116,7 @@ static struct platform_device *devices[] __initdata = {
 	&msm_device_i2c,
 	&msm_device_i2c_2,
 	&hs_device,
-#ifdef CONFIG_MSM7KV2_AUDIO
+#if defined(CONFIG_MSM7KV2_1X_AUDIO) || defined(CONFIG_MSM7KV2_AUDIO)
 	&msm_aictl_device,
 	&msm_mi2s_device,
 	&msm_lpa_device,
