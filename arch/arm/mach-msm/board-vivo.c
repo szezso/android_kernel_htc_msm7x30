@@ -1506,14 +1506,14 @@ static int Vivo_s5k6aafx_vreg_off(void)
 }
 #endif
 
-static void config_vivo_camera_on_gpios(void)
+static void config_camera_on_gpios(void)
 {
 	pr_info("[CAM] config_camera_on_gpios\n");
 	config_gpio_table(camera_on_gpio_table,
 		ARRAY_SIZE(camera_on_gpio_table));
 }
 
-static void config_vivo_camera_off_gpios(void)
+static void config_camera_off_gpios(void)
 {
 	pr_info("[CAM] config_camera_off_gpios\n");
 	config_gpio_table(camera_off_gpio_table,
@@ -1534,8 +1534,8 @@ struct resource msm_camera_resources[] = {
 };
 
 static struct msm_camera_device_platform_data msm_camera_device_data = {
-  .camera_gpio_on  = config_vivo_camera_on_gpios,
-  .camera_gpio_off = config_vivo_camera_off_gpios,
+  .camera_gpio_on  = config_camera_on_gpios,
+  .camera_gpio_off = config_camera_off_gpios,
   .ioext.mdcphy = MSM_MDC_PHYS,
   .ioext.mdcsz  = MSM_MDC_SIZE,
   .ioext.appphy = MSM_CLK_CTL_PHYS,

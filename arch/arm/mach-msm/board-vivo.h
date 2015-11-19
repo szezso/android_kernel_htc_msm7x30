@@ -22,9 +22,9 @@
 #define PM8058_GPIO_SYS_TO_PM(sys_gpio)    (sys_gpio - NR_GPIO_IRQS)
 
 #define MSM_LINUX_BASE1			0x04400000
-#define MSM_LINUX_SIZE1			0x1C000000
+#define MSM_LINUX_SIZE1			0x1BC00000
 #define MSM_LINUX_BASE2			0x20000000
-#define MSM_LINUX_SIZE2			0x0C300000
+#define MSM_LINUX_SIZE2			0x0BE00000
 
 #define MSM_RAM_CONSOLE_BASE		0x00500000
 #define MSM_RAM_CONSOLE_SIZE		0x00100000
@@ -34,7 +34,7 @@
 
 #define PMEM_KERNEL_EBI0_SIZE   	0x00500000       /* 7MB -> 9MB*/
 
-#define MSM_PMEM_SF_BASE		0x2E100000
+#define MSM_PMEM_SF_BASE		0x2DC00000
 #define MSM_PMEM_SF_SIZE		0x01F00000
 
 #define MSM_FB_SIZE    roundup((800 * ALIGN(480, 32) * 4 * 3), 4096) /* 4 bpp x 3 pages, Note: must be multiple of 4096 */
