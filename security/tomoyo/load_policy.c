@@ -1,7 +1,9 @@
 /*
  * security/tomoyo/load_policy.c
  *
- * Copyright (C) 2005-2011  NTT DATA CORPORATION
+ * Policy loader launcher for TOMOYO.
+ *
+ * Copyright (C) 2005-2010  NTT DATA CORPORATION
  */
 
 #include "common.h"
