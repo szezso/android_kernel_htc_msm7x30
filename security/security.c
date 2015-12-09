@@ -179,7 +179,8 @@ int security_capset(struct cred *new, const struct cred *old,
 int security_capable(struct user_namespace *ns, const struct cred *cred,
 		     int cap)
 {
-	return security_ops->capable(cred, ns, cap, SECURITY_CAP_AUDIT);
+	return security_ops->capable(current, cred, ns, cap,
+				     SECURITY_CAP_AUDIT);
 }
 
 int security_real_capable(struct task_struct *tsk, struct user_namespace *ns,
@@ -189,7 +190,7 @@ int security_real_capable(struct task_struct *tsk, struct user_namespace *ns,
 	int ret;
 
 	cred = get_task_cred(tsk);
-	ret = security_ops->capable(cred, ns, cap, SECURITY_CAP_AUDIT);
+	ret = security_ops->capable(tsk, cred, ns, cap, SECURITY_CAP_AUDIT);
 	put_cred(cred);
 	return ret;
 }
@@ -201,7 +202,7 @@ int security_real_capable_noaudit(struct task_struct *tsk,
 	int ret;
 
 	cred = get_task_cred(tsk);
-	ret = security_ops->capable(cred, ns, cap, SECURITY_CAP_NOAUDIT);
+	ret = security_ops->capable(tsk, cred, ns, cap, SECURITY_CAP_NOAUDIT);
 	put_cred(cred);
 	return ret;
 }
@@ -311,8 +312,8 @@ int security_sb_statfs(struct dentry *dentry)
 	return security_ops->sb_statfs(dentry);
 }
 
-int security_sb_mount(const char *dev_name, struct path *path,
-                       const char *type, unsigned long flags, void *data)
+int security_sb_mount(char *dev_name, struct path *path,
+                       char *type, unsigned long flags, void *data)
 {
 	return security_ops->sb_mount(dev_name, path, type, flags, data);
 }
@@ -570,7 +571,7 @@ int security_inode_permission(struct inode *inode, int mask)
 {
 	if (unlikely(IS_PRIVATE(inode)))
 		return 0;
-	return security_ops->inode_permission(inode, mask);
+	return security_ops->inode_permission(inode, mask, 0);
 }
 
 int security_inode_setattr(struct dentry *dentry, struct iattr *attr)

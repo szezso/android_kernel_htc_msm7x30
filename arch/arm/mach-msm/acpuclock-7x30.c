@@ -16,7 +16,6 @@
 
 #include <linux/version.h>
 #include <linux/kernel.h>
-#include <linux/module.h>
 #include <linux/init.h>
 #include <linux/errno.h>
 #include <linux/string.h>
@@ -26,7 +25,6 @@
 #include <linux/mutex.h>
 #include <linux/io.h>
 #include <linux/sort.h>
-#include <linux/platform_device.h>
 #include <mach/board.h>
 #include <mach/msm_iomap.h>
 #include <asm/mach-types.h>
@@ -441,7 +439,7 @@ static unsigned long acpuclk_7x30_get_rate(int cpu)
  * Clock driver initialization
  *---------------------------------------------------------------------------*/
 
-static void __devinit acpuclk_hw_init(void)
+static void __init acpuclk_hw_init(void)
 {
 	struct clkctl_acpu_speed *s;
 	uint32_t div, sel, src_num;
@@ -519,7 +517,7 @@ static void __devinit acpuclk_hw_init(void)
 }
 
 /* Initalize the lpj field in the acpu_freq_tbl. */
-static void __devinit lpj_init(void)
+static void __init lpj_init(void)
 {
 	int i;
 	const struct clkctl_acpu_speed *base_clk = drv_state.current_speed;
@@ -557,7 +555,7 @@ static inline void setup_cpufreq_table(void) { }
  * Truncate the frequency table at the current PLL2 rate and determine the
  * backup PLL to use when scaling PLL2.
  */
-void __devinit pll2_fixup(void)
+void __init pll2_fixup(void)
 {
 	struct clkctl_acpu_speed *speed = acpu_freq_tbl;
 #ifndef CONFIG_ACPUCLOCK_OVERCLOCKING
@@ -590,7 +588,7 @@ void __devinit pll2_fixup(void)
 #define RPM_BYPASS_MASK	(1 << 3)
 #define PMIC_MODE_MASK	(1 << 4)
 
-static void __devinit populate_plls(void)
+static void __init populate_plls(void)
 {
 	acpuclk_sources[PLL_1] = clk_get_sys("acpu", "pll1_clk");
 	BUG_ON(IS_ERR(acpuclk_sources[PLL_1]));
@@ -598,14 +596,6 @@ static void __devinit populate_plls(void)
 	BUG_ON(IS_ERR(acpuclk_sources[PLL_2]));
 	acpuclk_sources[PLL_3] = clk_get_sys("acpu", "pll3_clk");
 	BUG_ON(IS_ERR(acpuclk_sources[PLL_3]));
-	/*
-	 * Prepare all the PLLs because we enable/disable them
-	 * from atomic context and can't always ensure they're
-	 * all prepared in non-atomic context.
-	 */
-	BUG_ON(clk_prepare(acpuclk_sources[PLL_1]));
-	BUG_ON(clk_prepare(acpuclk_sources[PLL_2]));
-	BUG_ON(clk_prepare(acpuclk_sources[PLL_3]));
 }
 
 static struct acpuclk_data acpuclk_7x30_data = {
@@ -616,7 +606,7 @@ static struct acpuclk_data acpuclk_7x30_data = {
 	.switch_time_us = 50,
 };
 
-static int __devinit acpuclk_7x30_probe(struct platform_device *pdev)
+static int __init acpuclk_7x30_init(struct acpuclk_soc_data *soc_data)
 {
 	pr_info("%s()\n", __func__);
 
@@ -631,12 +621,8 @@ static int __devinit acpuclk_7x30_probe(struct platform_device *pdev)
 	return 0;
 }
 
-static struct platform_driver acpuclk_7x30_driver = {
-	.probe = acpuclk_7x30_probe,
-	.driver = {
-		.name = "acpuclk-7x30",
-		.owner = THIS_MODULE,
-	},
+struct acpuclk_soc_data acpuclk_7x30_soc_data __initdata = {
+	.init = acpuclk_7x30_init,
 };
 
 #ifdef CONFIG_VDD_SYSFS_INTERFACE
@@ -675,9 +661,3 @@ void acpuclk_set_vdd(unsigned int khz, int vdd)
 	mutex_unlock(&drv_state.lock);
 }
 #endif
-
-static int __init acpuclk_7x30_init(void)
-{
-	return platform_driver_register(&acpuclk_7x30_driver);
-}
-postcore_initcall(acpuclk_7x30_init);
